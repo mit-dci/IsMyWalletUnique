@@ -690,6 +690,8 @@ function wheelPixels(e) {
 
 canvas.addEventListener("wheel", (e) => {
   if (e.target !== canvas) return;
+  // Let the page scroll until the field section is snapped to the top.
+  if (Math.abs(canvas.closest(".field").getBoundingClientRect().top) > 1) return;
   const { x, y } = wheelPixels(e);
   if (e.ctrlKey) {
     e.preventDefault();
