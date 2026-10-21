@@ -1,6 +1,6 @@
-/* Fixed-slot fingerprint code, one token per habit, always in this order:
-   version, sequence, locktime, script, sighash, rune.
-   Signature length is not a habit: low-r and high-r are omitted. */
+/* Facet values arrive as the collector's names (data-collection/features.md),
+   with sets joined by "+". Display names are applied only when rendering.
+   Signature length is not a habit: low-r grinding is folded away. */
 
 const FACETS = [
   ["version", "Version"],
@@ -8,109 +8,78 @@ const FACETS = [
   ["lock", "Locktime"],
   ["family", "Script"],
   ["sighash", "Signature"],
-  ["rune", "Runestone"],
+  ["data", "Data Carrying Mechanism"],
 ];
 
 const LABEL = {
-  v1: "v1", v2: "v2", v3: "v3", v_other: "not 1–3",
-  final: "final", rbf: "RBF", locktime_no_rbf: "no RBF",
-  rel_blocks: "relative", rel_time: "relative time",
-  seq_mixed: "mixed", seq_other: "other",
-  lt0: "0", lt_tip: "1 block", lt_2_9: "2–9",
-  lt_10_99: "10–99", "lt_100+": "100+", lt_time: "time",
-  lt_exact: "same block", lt_future: "future",
-  p2wpkh: "wpkh", p2pkh: "pkh", p2sh_p2wpkh: "sh-wpkh",
-  p2tr_key: "tr key", p2tr_script: "tr script", inscription: "insc",
-  p2wsh: "wsh", p2sh_p2wsh: "sh-wsh", p2sh: "sh", mixed_inputs: "mixed",
-  p2a: "anchor", p2pk: "pk",
-  ecdsa_ALL: "ALL", "ecdsa_ALL|ACP": "ALL|ACP", "ecdsa_SINGLE|ACP": "SINGLE|ACP",
-  schnorr_default: "schnorr", schnorr_explicit_all: "schnorr ALL",
-  "schnorr_explicit_ALL|ACP": "schnorr ALL|ACP",
-  "schnorr_explicit_SINGLE|ACP": "schnorr SINGLE|ACP",
-  nosig: "no sig",
-  rune: "rune", plain: "plain",
+  version: { 1: "v1", 2: "v2", 3: "v3" },
+  seq: {
+    final: "final", rbf: "RBF", locktime_no_rbf: "locktime, no RBF",
+    relative_blocks: "relative blocks", relative_time: "relative time", other: "other",
+  },
+  lock: {
+    none: "none", height_exact: "current height", height_delta_1: "1 block back",
+    height_delta_2_9: "2–9 blocks back", height_delta_10_99: "10–99 blocks back",
+    height_delta_100_plus: "100+ blocks back", height_future: "future height", timestamp: "timestamp",
+  },
+  family: {
+    p2pk: "P2PK", p2pk_lax_der: "P2PK lax DER", p2pkh: "P2PKH", p2pkh_lax_der: "P2PKH lax DER",
+    p2sh_p2wpkh: "P2SH-P2WPKH", p2wpkh: "P2WPKH", p2ms: "bare multisig", p2ms_lax_der: "bare multisig lax DER",
+    p2sh: "P2SH", p2sh_p2wsh: "P2SH-P2WSH", p2wsh: "P2WSH",
+    p2tr_keypath: "taproot key path", p2tr_scriptpath: "taproot script path", p2a: "anchor", unknown: "unknown",
+  },
+  sighash: {
+    none: "no signature", DEFAULT: "default", ALL: "ALL", NONE: "NONE", SINGLE: "SINGLE",
+    "ALL|ANYONECANPAY": "ALL|ACP", "NONE|ANYONECANPAY": "NONE|ACP", "SINGLE|ANYONECANPAY": "SINGLE|ACP",
+    UNKNOWN: "unknown",
+  },
+  data: {
+    none: "none", op_return: "OP_RETURN", op_return_runestone: "runestone", reveals_inscription: "inscription",
+    op_return_witness_commitment: "witness commitment", op_return_omni: "Omni",
+    op_return_stacks_block_commit: "Stacks commit", op_return_bip47: "BIP47",
+    op_return_len_1: "OP_RETURN len 1", op_return_len_20: "OP_RETURN len 20", op_return_len_80: "OP_RETURN len 80",
+    op_return_rsk: "RSK", op_return_coredao: "CoreDAO", op_return_exsat: "exSat", op_return_hathor: "Hathor",
+    p2ms: "bare multisig", unknown: "unknown script", fp_any_taproot_annex: "taproot annex",
+  },
 };
 
 const TIP = {
-  v1: "nVersion 1.",
-  v2: "nVersion 2.",
-  v3: "nVersion 3. TRUC.",
-  v_other: "nVersion is not 1, 2, or 3.",
-  rel_blocks: "Relative lock, counted in blocks.",
-  rel_time: "Relative lock, counted in time.",
-  final: "Final nSequence.",
-  rbf: "RBF signaled.",
-  locktime_no_rbf: "Locktime is enabled and RBF is not signaled.",
-  seq_mixed: "Inputs disagree on nSequence.",
-  seq_other: "nSequence is not final, RBF, locktime-only, or a relative lock.",
+  version: { 1: "nVersion 1.", 2: "nVersion 2.", 3: "nVersion 3. TRUC." },
+  seq: {
+    final: "nSequence 0xffffffff.",
+    rbf: "nSequence 0xfffffffd. Signals RBF.",
+    locktime_no_rbf: "nSequence 0xfffffffe. Locktime is enabled and RBF is not signaled.",
+    relative_blocks: "BIP68 relative lock, counted in blocks.",
+    relative_time: "BIP68 relative lock, counted in 512-second units.",
+    other: "nSequence has the disable bit set and is not final, RBF, or locktime-only.",
+  },
+  lock: {
+    none: "nLockTime is 0.",
+    height_exact: "nLockTime equals the confirming height.",
+    height_delta_1: "nLockTime is 1 block below the confirming height.",
+    height_delta_2_9: "nLockTime is 2–9 blocks below the confirming height.",
+    height_delta_10_99: "nLockTime is 10–99 blocks below the confirming height.",
+    height_delta_100_plus: "nLockTime is 100 or more blocks below the confirming height.",
+    height_future: "nLockTime is above the confirming height.",
+    timestamp: "nLockTime is a timestamp.",
+  },
+  sighash: {
+    none: "No input signatures.",
+    DEFAULT: "64-byte Schnorr signature with no sighash byte.",
+    UNKNOWN: "Sighash flag outside the standard values.",
+  },
 };
 
-const TOKEN = {
-  v1: "1", v2: "2", v3: "3", v_other: "X",
-  final: "F", rbf: "R", locktime_no_rbf: "K",
-  rel_blocks: "B", rel_time: "T", seq_mixed: "M", seq_other: "S",
-  lt0: "0", lt_tip: "1", lt_2_9: "9", lt_10_99: "d", "lt_100+": "+",
-  lt_time: "t", lt_exact: "e", lt_future: "f",
-  p2wpkh: "W", p2pkh: "K", p2sh_p2wpkh: "N",
-  p2tr_key: "T", p2tr_script: "C", inscription: "I",
-  p2wsh: "H", p2sh_p2wsh: "Q", p2sh: "P", mixed_inputs: "M", p2a: "A", p2pk: "k",
-  rune: "R", plain: "p",
-  other: "?",
-};
-
-const SIG_ATOM = {
-  ecdsa_ALL: "A",
-  "ecdsa_ALL|ACP": "a",
-  "ecdsa_SINGLE|ACP": "S",
-  schnorr_default: "D",
-  schnorr_explicit_all: "E",
-  "schnorr_explicit_ALL|ACP": "e",
-  "schnorr_explicit_SINGLE|ACP": "s",
-  nosig: "0",
-  other: "?",
-};
-const SIG_RANK = Object.keys(SIG_ATOM);
+const parts = (value) => String(value).split("+");
 
 function facetLabel(key, value) {
   if (value == null || value === "") return "";
-  if (value === "other") return key === "family" ? "other script" : "other";
-  if (key === "sighash" && String(value).includes("+")) {
-    return String(value).split("+").map((part) => LABEL[part] || part).join("+");
-  }
-  return LABEL[value] || String(value);
+  return parts(value).map((part) => (LABEL[key] && LABEL[key][part]) || part).join(" + ");
 }
 
 function tipFor(key, value) {
-  if (value === "v_other") return TIP.v_other;
-  if (value === "other" && key === "family") return "Spent script was not one of the named types.";
-  if (TIP[value]) return TIP[value];
-  return facetLabel(key, value);
-}
-
-function sighashToken(value) {
   if (value == null || value === "") return "";
-  const parts = String(value).split("+");
-  const known = [];
-  const unknown = [];
-  for (const part of parts) {
-    if (SIG_ATOM[part]) known.push(part);
-    else unknown.push(part);
-  }
-  known.sort((a, b) => SIG_RANK.indexOf(a) - SIG_RANK.indexOf(b));
-  let token = known.map((part) => SIG_ATOM[part]).join("");
-  if (unknown.length) token += `?${unknown.join("+")}`;
-  return token || "?";
-}
-
-function facetToken(key, value) {
-  if (key === "sighash") return sighashToken(value);
-  if (value == null || value === "") return "";
-  return TOKEN[value] || "?";
-}
-
-function fingerprintCode(fp) {
-  if (!fp) return "";
-  return FACETS.map(([key]) => facetToken(key, fp[key])).join("·");
+  return parts(value).map((part) => (TIP[key] && TIP[key][part]) || facetLabel(key, part)).join(" ");
 }
 
 function fingerprintWords(fp) {
@@ -129,23 +98,10 @@ function windowLine(data) {
   return `Collected over ${span.toLocaleString()} blocks`;
 }
 
-function withoutLowr(state) {
-  if (!state || state === "other") return "other";
-  const parts = String(state).split("|");
-  if (parts.length < 5) return state;
-  const tail = parts[parts.length - 1];
-  let rune = "";
-  if (tail === "rune" || tail === "plain") rune = parts.pop();
-  const mark = parts[parts.length - 1];
-  if (mark === "grind" || mark === "nogrind" || mark === "na" || mark === "other") parts.pop();
-  if (rune) parts.push(rune);
-  return parts.join("|");
-}
-
 function collapsePrints(rows) {
   const by = new Map();
   for (const fp of rows) {
-    const state = withoutLowr(fp.state);
+    const state = FACETS.map(([key]) => fp[key]).join("|");
     const prev = by.get(state);
     if (!prev) {
       const copy = { ...fp, state };

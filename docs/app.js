@@ -5,7 +5,7 @@ const LADDER = [
   { title: "Locktime", key: "lock" },
   { title: "Script", key: "family" },
   { title: "Signature", key: "sighash" },
-  { title: "Runestone", key: "rune" },
+  { title: "Data Carrying Mechanism", key: "data" },
   { title: "Fingerprint", key: "state" },
 ];
 
@@ -14,7 +14,7 @@ const LABEL_COLORS = ["#f2efe6", "#e07a5f", "#7dba9a", "#7aa2c4", "#d4c15a", "#c
 
 function clusterLabel(key, value, fps) {
   if (!key || value === "all" || value == null) return "All transactions";
-  if (key === "state") return fingerprintCode(fps[0]);
+  if (key === "state") return fingerprintWords(fps[0]).join(" · ");
   return facetLabel(key, value);
 }
 const CELL = 3;
@@ -399,7 +399,7 @@ function renderLegend() {
   el.innerHTML = "";
   if (depth === 0) return;
   name.textContent = key === "state"
-    ? "Code is version · sequence · lock · script · sighash · rune"
+    ? "Color is fingerprint"
     : `Color is ${facet ? facet[1].toLowerCase() : "one fingerprint"}`;
   el.append(name);
   if (key === "state") return;
@@ -491,14 +491,13 @@ function renderReadout() {
   }
   const glue = join === "or" ? " or " : " · ";
   const matched = payload.fingerprints.filter(passes);
-  const fallback = matched.length === 1 ? fingerprintCode(matched[0]) : (chosen.join(glue) || `All ${unit}`);
+  const fallback = chosen.join(glue) || `All ${unit}`;
   const target = hover
     ? { title: clusterLabel(LADDER[depth].key, hover.value, hover.fps), n: hover.n, fps: hover.fps }
     : { title: fallback, n: viewN, fps: matched };
   const title = document.getElementById("sel-title");
   title.textContent = target.title || `All ${unit}`;
-  title.classList.toggle("code", typeof target.title === "string" && target.title.includes("·"));
-  title.title = hover && LADDER[depth].key ? tipFor(LADDER[depth].key, hover.value) : "";
+  title.title = hover && LADDER[depth].key && LADDER[depth].key !== "state" ? tipFor(LADDER[depth].key, hover.value) : "";
   const { p, oneIn } = shareText(target.n);
   document.getElementById("sel-ratio").textContent = target.n === total ? "" : typeof oneIn === "number" ? `1 out of ${oneIn.toLocaleString()}` : "—";
   document.getElementById("sel-share").textContent = `${target.n.toLocaleString()} ${unit} · ${(p * 100).toFixed(2)}%`;
@@ -506,8 +505,7 @@ function renderReadout() {
   const mix = document.getElementById("sel-mix");
   let noteText = "";
   if (hover && hover.value === "other") noteText = tipFor(LADDER[depth].key, hover.value);
-  else if (hover && hover.value === "v_other") noteText = TIP.v_other;
-  if (hover && hover.fps.length === 1) {
+  if (hover && hover.fps.length === 1 && LADDER[depth].key !== "state") {
     const words = fingerprintWords(hover.fps[0]).join(" · ");
     noteText = noteText ? `${noteText} ${words}` : words;
   } else if (!hover && matched.length === 1) noteText = fingerprintWords(matched[0]).join(" · ");
