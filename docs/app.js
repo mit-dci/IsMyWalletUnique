@@ -500,7 +500,7 @@ function renderReadout() {
   title.classList.toggle("code", typeof target.title === "string" && target.title.includes("·"));
   title.title = hover && LADDER[depth].key ? tipFor(LADDER[depth].key, hover.value) : "";
   const { p, oneIn } = shareText(target.n);
-  document.getElementById("sel-ratio").textContent = typeof oneIn === "number" ? `1 out of ${oneIn.toLocaleString()}` : "—";
+  document.getElementById("sel-ratio").textContent = target.n === total ? "" : typeof oneIn === "number" ? `1 out of ${oneIn.toLocaleString()}` : "—";
   document.getElementById("sel-share").textContent = `${target.n.toLocaleString()} ${unit} · ${(p * 100).toFixed(2)}%`;
   const note = document.getElementById("sel-note");
   const mix = document.getElementById("sel-mix");

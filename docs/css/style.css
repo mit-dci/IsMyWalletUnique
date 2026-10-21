@@ -162,7 +162,7 @@ aside section:first-child .kicker { margin-top: 0; }
   line-height: 1;
 }
 .note { margin: 8px 0 0; color: var(--dim); font-size: 13px; line-height: 1.35; }
-.note:empty { display: none; }
+.note:empty, .ratio:empty { display: none; }
 .mix:empty { display: none; }
 .mix { margin-top: 12px; }
 .mix .fixed {
