@@ -329,11 +329,11 @@ function loadHeight(h) {
     const [nodeStart, nodeCount, edgeFrom, edgeCount] = spec;
     try {
       const jobs = [
-        rangeBuf("graph/nodes.bin", nodeStart * NODE, nodeCount * NODE),
-        rangeBuf("graph/edges.bin", edgeFrom * EDGE, edgeCount * EDGE),
-        rangeBuf("graph/kcounts.bin", nodeStart * 4, nodeCount * 4),
+        rangeBuf("nodes.bin", nodeStart * NODE, nodeCount * NODE),
+        rangeBuf("edges.bin", edgeFrom * EDGE, edgeCount * EDGE),
+        rangeBuf("kcounts.bin", nodeStart * 4, nodeCount * 4),
       ];
-      if (meta.values) jobs.push(rangeBuf("graph/values.bin", nodeStart * VALUE, nodeCount * VALUE));
+      if (meta.values) jobs.push(rangeBuf("values.bin", nodeStart * VALUE, nodeCount * VALUE));
       const bufs = await Promise.all(jobs);
       const [nodeBuf, edgeBuf, countBuf, valueBuf] = bufs;
       const nodes = decodeNodes(nodeBuf, nodeStart);
@@ -395,17 +395,17 @@ function edgesOf(node) {
 }
 
 async function fetchNode(index) {
-  const buf = await rangeBuf("graph/nodes.bin", index * NODE, NODE);
+  const buf = await rangeBuf("nodes.bin", index * NODE, NODE);
   return decodeNodes(buf, index)[0];
 }
 
 async function fetchSats(index) {
-  const buf = await rangeBuf("graph/values.bin", index * VALUE, VALUE);
+  const buf = await rangeBuf("values.bin", index * VALUE, VALUE);
   return Number(new BigUint64Array(buf)[0]);
 }
 
 async function fetchTxid(index) {
-  const buf = await rangeBuf("graph/txids.bin", index * 32, 32);
+  const buf = await rangeBuf("txids.bin", index * 32, 32);
   const bytes = new Uint8Array(buf);
   return [...bytes].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
@@ -803,11 +803,11 @@ function loadOverview() {
     if (atHome) fitAll(false);
     else draw();
   };
-  img.src = `graph/overview.png?p=${meta.paint || 1}`;
+  img.src = `overview.png?p=${meta.paint || 1}`;
 }
 
 async function refreshMeta() {
-  const response = await fetch("graph/meta.json", { cache: "no-store" });
+  const response = await fetch("meta.json", { cache: "no-store" });
   if (!response.ok) return;
   const next = await response.json();
   const prev = meta;
@@ -823,7 +823,7 @@ async function refreshMeta() {
       atHome = true;
     }
     if (next.complete) {
-      fetch("fingerprints.json", { cache: "no-store" }).then((r) => r.json()).then((prints) => {
+      fetch("../fingerprints.json", { cache: "no-store" }).then((r) => r.json()).then((prints) => {
         total = prints.total;
         unit = prints.unit || unit;
         setCounts(collapsePrints(prints.fingerprints));
@@ -910,7 +910,7 @@ window.addEventListener("keydown", (e) => { if (e.key === "Escape") fitAll(true)
 window.addEventListener("resize", resize);
 new ResizeObserver(resize).observe(canvas);
 
-fetch("fingerprints.json", { cache: "no-store" }).then((r) => r.json()).then((prints) => {
+fetch("../fingerprints.json", { cache: "no-store" }).then((r) => r.json()).then((prints) => {
   total = prints.total;
   unit = prints.unit || "transactions";
   setCounts(collapsePrints(prints.fingerprints));
