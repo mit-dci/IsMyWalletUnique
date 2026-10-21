@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Is My Wallet Unique?</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;1,400&display=swap">
-<link rel="stylesheet" href="css/style.css?v=27">
+<link rel="stylesheet" href="css/style.css?v=28">
 </head>
 <body>
 <article>
@@ -15,7 +15,8 @@
   </header>
 
   <section>
-    <p class="kicker">// context</p>
+    <details>
+    <summary class="kicker">// context</summary>
     <p>
       Every Bitcoin wallet leaves a fingerprint. When software constructs a
       transaction it makes dozens of small decisions — input ordering,
@@ -47,10 +48,12 @@
       makes the comparison easier to reproduce and keep current as wallets
       evolve.
     </p>
+    </details>
   </section>
 
   <section>
-    <p class="kicker">// clustering</p>
+    <details>
+    <summary class="kicker">// clustering</summary>
     <p>
       Beyond collaborative transactions, fingerprints are a powerful input
       to
@@ -63,6 +66,7 @@
       software, which corroborates or extends a cluster that on-chain
       heuristics alone would leave ambiguous.
     </p>
+    </details>
   </section>
 </article>
 

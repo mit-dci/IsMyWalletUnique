@@ -26,6 +26,9 @@ article > header h1 { margin: 0; font-size: 44px; font-weight: 500; letter-spaci
 article > header p { margin: 12px 0 0; color: var(--dim); font-size: 16px; }
 article section { margin-top: 32px; padding-left: 20px; border-left: 2px solid var(--hot); color: var(--dim); line-height: 1.65; }
 article section .kicker { margin-top: 0; }
+article summary { cursor: pointer; }
+article summary:hover { color: var(--dim); }
+article details:not([open]) summary { margin-bottom: 0; }
 article a, body > footer a { color: var(--hot); text-decoration: none; }
 article a:hover, body > footer a:hover { text-decoration: underline; }
 body > footer { padding: 16px 22px; border-top: 1px solid var(--line); color: var(--faint); font-size: 12px; text-align: center; }
