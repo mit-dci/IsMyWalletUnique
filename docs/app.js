@@ -1,5 +1,5 @@
 const LADDER = [
-  { title: "Population", key: null },
+  { title: "All transactions", key: null },
   { title: "Version", key: "version" },
   { title: "Sequence", key: "seq" },
   { title: "Locktime", key: "lock" },
@@ -274,8 +274,6 @@ function draw() {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, w, h);
   ctx.textBaseline = "top";
-  const mosaic = !LADDER[depth].key;
-  const key = paintKey();
   const labels = [];
   const span = CELL * cam.s;
   const viewL = -cam.x / cam.s - STRIDE;
@@ -298,7 +296,7 @@ function draw() {
       let n = fi === g.fps.length - 1 ? g.cells - i : Math.round((fp.n / g.n) * g.cells);
       n = Math.max(0, Math.min(n, g.cells - i));
       const lab = labelOf(fp);
-      const fill = mosaic ? (colorOf[`${key}:${fp[key]}`] || "#8e8a82") : g.color;
+      const fill = g.color;
       ctx.fillStyle = fill;
       for (let k = 0; k < n; k += 1) {
         const idx = i + k;
@@ -398,10 +396,11 @@ function renderLegend() {
   const facet = FACETS.find((f) => f[0] === key);
   const name = document.createElement("span");
   name.className = "legend-name";
-  name.textContent = depth === 0 ? "Color is version" : key === "state"
+  el.innerHTML = "";
+  if (depth === 0) return;
+  name.textContent = key === "state"
     ? "Code is version · sequence · lock · script · sighash · rune"
     : `Color is ${facet ? facet[1].toLowerCase() : "one fingerprint"}`;
-  el.innerHTML = "";
   el.append(name);
   if (key === "state") return;
   const counts = new Map();
