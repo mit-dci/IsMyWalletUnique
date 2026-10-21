@@ -230,7 +230,7 @@ dd { margin: 0; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size
 #labels button { padding: 2px 6px; color: var(--dim); }
 
 .join { display: flex; gap: 4px; margin: 0 0 12px; }
-.join button {
+.join button, #reset {
   background: transparent;
   color: var(--dim);
   border: 1px solid var(--line);
@@ -240,6 +240,8 @@ dd { margin: 0; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size
   padding: 3px 8px;
   cursor: pointer;
 }
+#reset { float: right; padding: 1px 6px; }
+#reset:hover { color: var(--ink); border-color: var(--dim); }
 .join button.on { color: var(--bg); background: var(--bone); border-color: var(--bone); }
 dt.on, dd.on { color: var(--bone); }
 .facet { margin-bottom: 12px; }

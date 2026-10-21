@@ -744,6 +744,11 @@ function setJoin(next) {
 }
 document.getElementById("join-and").onclick = () => setJoin("and");
 document.getElementById("join-or").onclick = () => setJoin("or");
+document.getElementById("reset").onclick = () => {
+  FACETS.forEach(([k]) => filters[k].clear());
+  path = [];
+  setJoin("and");
+};
 
 document.getElementById("mode-scale").onclick = () => {
   mode = "scale";
