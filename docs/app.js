@@ -32,7 +32,9 @@ function loadLabels() {
     return [];
   }
 }
-let labels = loadLabels();
+// Labels are disabled for now to declutter the UI.
+// let labels = loadLabels();
+let labels = [];
 
 const canvas = document.getElementById("field");
 const ctx = canvas.getContext("2d");
@@ -714,25 +716,26 @@ canvas.addEventListener("wheel", (e) => {
   renderReadout();
 }, { passive: false });
 
-document.getElementById("label-form").addEventListener("submit", (e) => {
-  e.preventDefault();
-  const input = document.getElementById("label-name");
-  const name = input.value.trim();
-  if (!name) return;
-  const spec = {};
-  for (const [k, set] of Object.entries(filters)) spec[k] = [...set];
-  labels.push({
-    name,
-    color: LABEL_COLORS[labels.length % LABEL_COLORS.length],
-    path: path.map((s) => ({ ...s })),
-    filters: spec,
-    join,
-  });
-  localStorage.setItem("fp-labels", JSON.stringify(labels));
-  input.value = "";
-  renderLabels();
-  layout();
-});
+// Labels are disabled for now to declutter the UI.
+// document.getElementById("label-form").addEventListener("submit", (e) => {
+//   e.preventDefault();
+//   const input = document.getElementById("label-name");
+//   const name = input.value.trim();
+//   if (!name) return;
+//   const spec = {};
+//   for (const [k, set] of Object.entries(filters)) spec[k] = [...set];
+//   labels.push({
+//     name,
+//     color: LABEL_COLORS[labels.length % LABEL_COLORS.length],
+//     path: path.map((s) => ({ ...s })),
+//     filters: spec,
+//     join,
+//   });
+//   localStorage.setItem("fp-labels", JSON.stringify(labels));
+//   input.value = "";
+//   renderLabels();
+//   layout();
+// });
 
 function setJoin(next) {
   join = next;
@@ -766,6 +769,6 @@ fetch("fingerprints.json").then((r) => r.json()).then((data) => {
   assignColors();
   document.getElementById("window").textContent = windowLine(data);
   renderFilters();
-  renderLabels();
+  // renderLabels();
   layout();
 });
