@@ -10,7 +10,7 @@
 -- like `reveals_inscription`, contribute their whole name.
 --
 -- `state` joins the facets with `|` in this order: version, seq, lock,
--- sighash, family, lowr, data. Sighash suffixes can contain `|`, so readers
+-- sighash, family, lowr, data, input_order, output_order. Sighash suffixes can contain `|`, so readers
 -- split `state` from both ends.
 
 WITH
@@ -22,8 +22,9 @@ named AS (
     SELECT
         fp_version,
         fp_any_low_r_grinding,
-        CASE WHEN COLUMNS('^((fp_sequence_shape|h_locktime_shape|h_sighash|input_type|output_type)__.*|reveals_inscription|fp_any_taproot_annex)$')
-            THEN regexp_replace(alias(COLUMNS('^((fp_sequence_shape|h_locktime_shape|h_sighash|input_type|output_type)__.*|reveals_inscription|fp_any_taproot_annex)$')), '^.*__', '')
+        fp_outputs_bip69_sorted,
+        CASE WHEN COLUMNS('^((fp_sequence_shape|h_locktime_shape|h_sighash|input_type|output_type|fp_input_order)__.*|reveals_inscription|fp_any_taproot_annex)$')
+            THEN regexp_replace(alias(COLUMNS('^((fp_sequence_shape|h_locktime_shape|h_sighash|input_type|output_type|fp_input_order)__.*|reveals_inscription|fp_any_taproot_annex)$')), '^.*__', '')
         END
     FROM txs
 ),
@@ -38,14 +39,16 @@ facets AS (
         fp_any_low_r_grinding::VARCHAR AS lowr,
         coalesce(nullif(concat_ws('+',
             *COLUMNS('^output_type__(op_return.*|p2ms|unknown)$'), reveals_inscription, fp_any_taproot_annex
-        ), ''), 'none') AS data
+        ), ''), 'none') AS data,
+        coalesce(nullif(concat_ws('+', *COLUMNS('^fp_input_order__')), ''), 'none') AS input_order,
+        fp_outputs_bip69_sorted::VARCHAR AS output_order
     FROM named
 ),
 
 counted AS (
     SELECT
         *,
-        concat_ws('|', version, seq, lock, sighash, family, lowr, data) AS state,
+        concat_ws('|', version, seq, lock, sighash, family, lowr, data, input_order, output_order) AS state,
         count(*) AS n
     FROM facets
     GROUP BY ALL
@@ -64,7 +67,8 @@ SELECT json_object(
     'fingerprints', (
         SELECT to_json(list(json_object(
             'version', version, 'seq', seq, 'lock', lock, 'sighash', sighash, 'family', family,
-            'lowr', lowr, 'data', data, 'id', id, 'n', n, 'state', state
+            'lowr', lowr, 'data', data, 'input_order', input_order, 'output_order', output_order,
+            'id', id, 'n', n, 'state', state
         ) ORDER BY id))
         FROM ranked
     )

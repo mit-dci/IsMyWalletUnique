@@ -3,6 +3,8 @@ const LADDER = [
   { title: "Version", key: "version" },
   { title: "Sequence", key: "seq" },
   { title: "Locktime", key: "lock" },
+  { title: "Input order", key: "input_order" },
+  { title: "Output order", key: "output_order" },
   { title: "Script", key: "family" },
   { title: "Sighash", key: "sighash" },
   { title: "Data Carrying Mechanism", key: "data" },

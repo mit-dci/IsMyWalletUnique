@@ -6,6 +6,8 @@ const FACETS = [
   ["version", "Version"],
   ["seq", "Sequence"],
   ["lock", "Locktime"],
+  ["input_order", "Input order"],
+  ["output_order", "Output order"],
   ["family", "Script"],
   ["sighash", "Sighash"],
   ["data", "Data Carrying Mechanism"],
@@ -22,6 +24,11 @@ const LABEL = {
     height_delta_2_9: "2–9 blocks back", height_delta_10_99: "10–99 blocks back",
     height_delta_100_plus: "100+ blocks back", height_future: "future height", timestamp: "timestamp",
   },
+  input_order: {
+    single: "single", ascending: "ascending", descending: "descending", bip69: "BIP69",
+    historical: "historical", unknown: "unknown",
+  },
+  output_order: { true: "BIP69", false: "not BIP69" },
   family: {
     p2pk: "P2PK", p2pk_lax_der: "P2PK lax DER", p2pkh: "P2PKH", p2pkh_lax_der: "P2PKH lax DER",
     p2sh_p2wpkh: "P2SH-P2WPKH", p2wpkh: "P2WPKH", p2ms: "bare multisig", p2ms_lax_der: "bare multisig lax DER",
