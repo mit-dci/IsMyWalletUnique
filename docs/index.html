@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Is My Wallet Unique?</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;1,400&display=swap">
-<link rel="stylesheet" href="css/style.css?v=32">
+<link rel="stylesheet" href="css/style.css?v=33">
 </head>
 <body>
 <article>
@@ -80,6 +80,11 @@
         <button type="button" id="mode-scale" class="on">True scale</button>
         <button type="button" id="mode-side">Side by side</button>
       </div>
+      <div class="modes pager" id="pager" hidden>
+        <button type="button" id="page-prev" aria-label="Previous page">‹</button>
+        <span id="page-num"></span>
+        <button type="button" id="page-next" aria-label="Next page">›</button>
+      </div>
       <div class="scale-readout" id="scale-readout"></div>
     </div>
   </header>
@@ -129,6 +134,6 @@
   </p>
 </footer>
 <script src="print.js?v=8"></script>
-<script src="app.js?v=24"></script>
+<script src="app.js?v=25"></script>
 </body>
 </html>

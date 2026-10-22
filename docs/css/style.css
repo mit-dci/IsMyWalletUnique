@@ -85,6 +85,10 @@ body > footer { padding: 16px 22px; border-top: 1px solid var(--line); color: va
   cursor: pointer;
 }
 .modes button.on { color: var(--bg); background: var(--bone); border-color: var(--bone); }
+.pager { align-items: center; }
+.pager[hidden] { display: none; }
+.pager span { color: var(--dim); font: 12px "IBM Plex Mono", ui-monospace, monospace; white-space: nowrap; }
+.modes button:disabled { opacity: 0.35; cursor: default; }
 .legend { grid-column: 1 / -1; display: flex; flex-wrap: nowrap; align-items: center; gap: 8px 12px; margin: 2px 0 0; overflow: hidden; white-space: nowrap; }
 .legend .legend-name {
   color: var(--faint);

@@ -51,6 +51,16 @@ let cam = { x: 28, y: 28, s: 1 };
 let camTo = { x: 28, y: 28, s: 1 };
 let animating = false;
 let sizedFor = "";
+let cellBudget = 1;
+let pages = [];
+let page = 0;
+let pageKey = "";
+let pagedFor = "";
+let pageUnit = 0;
+// Smallest camera scale the unpaged layout may need to fit the canvas.
+const MIN_FIT = 0.75;
+// Fewest boxes the smallest group on a page gets.
+const MIN_CELLS = 16;
 
 function colorForIndex(i) {
   if (i < PALETTE.length) return PALETTE[i];
@@ -115,8 +125,8 @@ function sizeCanvas() {
     sizedFor = key;
     const availW = Math.max(STRIDE, w - 56);
     const availH = Math.max(STRIDE, h - 64);
-    const budget = Math.max(1, Math.floor((availW / STRIDE) * (availH / STRIDE) * 0.9));
-    baseUnit = Math.max(1, Math.round(total / budget));
+    cellBudget = Math.max(1, Math.floor((availW / STRIDE) * (availH / STRIDE) * 0.9));
+    baseUnit = Math.max(1, Math.round(total / cellBudget));
     homeS = 1;
   }
 }
@@ -144,14 +154,89 @@ function layoutGroups() {
     };
   }).sort((a, b) => b.n - a.n);
 
-  const rowLimit = mode === "side"
-    ? Math.max(canvas.clientWidth * 3, 2400)
-    : Math.max(STRIDE * 8, canvas.clientWidth - 56);
+  const key = JSON.stringify([depth, path, join, FACETS.map(([k]) => [...filters[k]])]);
+  if (key !== pageKey) {
+    pageKey = key;
+    page = 0;
+  }
+  if (`${key}@${sizedFor}` !== pagedFor) {
+    pagedFor = `${key}@${sizedFor}`;
+    pages = paginate(seeds);
+    page = Math.min(page, pages.length - 1);
+  }
+  pageUnit = pages[page].u;
+  const rowLimit = mode === "side" ? Math.max(canvas.clientWidth * 3, 2400) : scaleRowLimit();
+  groups = place(pages[page].list, pageUnit, rowLimit);
+  renderPager();
+}
+
+function scaleRowLimit() {
+  return Math.max(STRIDE * 8, canvas.clientWidth - 56);
+}
+
+function fits(list, u, minScale) {
+  const b = bounds(place(list, u, scaleRowLimit()));
+  return Math.min((canvas.clientWidth - 48) / b.w, (canvas.clientHeight - 48) / b.h) >= minScale;
+}
+
+// Smallest unit at which the list fits the canvas unzoomed, or null if it never does.
+function unitToFit(list) {
+  const most = list[0].n;
+  if (!fits(list, most, 1)) return null;
+  let lo = Math.max(1, Math.round(list.reduce((s, g) => s + g.n, 0) / cellBudget)) - 1;
+  let hi = most;
+  while (hi - lo > 1) {
+    const mid = Math.floor((lo + hi) / 2);
+    if (fits(list, mid, 1)) hi = mid;
+    else lo = mid;
+  }
+  return hi;
+}
+
+// Each page takes the most groups that fit the canvas at the page's own scale
+// while the smallest still gets MIN_CELLS boxes.
+function paginate(seeds) {
+  if (!seeds.length || fits(seeds, baseUnit, MIN_FIT)) return [{ list: seeds, u: baseUnit }];
+  const out = [];
+  for (let s = 0; s < seeds.length;) {
+    const ok = (c) => {
+      const list = seeds.slice(s, s + c);
+      const u = unitToFit(list);
+      return u != null && (u === 1 || list[list.length - 1].n / u >= MIN_CELLS);
+    };
+    let lo = 1;
+    let hi = 2;
+    while (s + hi <= seeds.length && ok(hi)) {
+      lo = hi;
+      hi *= 2;
+    }
+    hi = Math.min(hi, seeds.length - s + 1);
+    while (hi - lo > 1) {
+      const mid = (lo + hi) >> 1;
+      if (ok(mid)) lo = mid;
+      else hi = mid;
+    }
+    const list = seeds.slice(s, s + lo);
+    out.push({ list, u: unitToFit(list) || list[0].n });
+    s += lo;
+  }
+  return out;
+}
+
+function renderPager() {
+  document.getElementById("pager").hidden = pages.length < 2;
+  document.getElementById("page-num").textContent = `${page + 1} / ${pages.length}`;
+  document.getElementById("page-prev").disabled = page === 0;
+  document.getElementById("page-next").disabled = page === pages.length - 1;
+  document.getElementById("scale-readout").textContent = `1 box = ${pageUnit.toLocaleString()} ${unit}`;
+}
+
+function place(seeds, u, rowLimit) {
   let x = 0;
   let y = 0;
   let rowH = 0;
-  groups = seeds.map((g) => {
-    const cells = Math.max(1, Math.round(g.n / baseUnit));
+  return seeds.map((g) => {
+    const cells = Math.max(1, Math.round(g.n / u));
     const cols = Math.max(1, Math.ceil(Math.sqrt(cells * 1.5)));
     const rows = Math.ceil(cells / cols);
     const gw = cols * STRIDE - GAP;
@@ -238,7 +323,6 @@ function layout(opts = {}) {
   renderReadout();
   renderLadder();
   renderFilters();
-  document.getElementById("scale-readout").textContent = `1 box = ${baseUnit.toLocaleString()} ${unit}`;
 }
 
 function paintMark(x, y, span, accent) {
@@ -701,6 +785,14 @@ document.getElementById("reset").onclick = () => {
   path = [];
   setJoin("and");
 };
+
+function turnPage(dir) {
+  page = Math.max(0, Math.min(pages.length - 1, page + dir));
+  hover = null;
+  layout();
+}
+document.getElementById("page-prev").onclick = () => turnPage(-1);
+document.getElementById("page-next").onclick = () => turnPage(1);
 
 document.getElementById("mode-scale").onclick = () => {
   mode = "scale";
