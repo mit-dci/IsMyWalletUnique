@@ -1,133 +1,139 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Wallet Fingerprints</title>
-    <link
-      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
-      rel="stylesheet"
-    />
-    <style>
-      body {
-        background: #0a0a0a;
-      }
-    </style>
-  </head>
-  <body class="text-white font-mono">
-    <div class="max-w-full mx-auto p-3 md:p-6 space-y-8">
-      <header class="text-center">
-        <h1 class="text-2xl sm:text-4xl md:text-5xl font-bold text-pink-500">
-          Wallet Fingerprints
-        </h1>
-        <p class="mt-2 text-lg text-gray-400">
-          A systematic overview of wallet fingerprints
-        </p>
-      </header>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Is My Wallet Unique?</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;1,400&display=swap">
+<link rel="stylesheet" href="css/style.css?v=34">
+</head>
+<body>
+<article>
+  <header>
+    <h1>Is My Wallet Unique?</h1>
+    <p>A systematic overview of wallet fingerprints</p>
+  </header>
 
-      <section
-        class="max-w-2xl mx-auto text-sm leading-relaxed space-y-4"
-        style="border-left: 2px solid #831843; padding-left: 1.25rem"
-      >
-        <p class="text-xs tracking-widest uppercase text-pink-800 mb-1">
-          // context
-        </p>
-        <p class="text-gray-400">
-          Every Bitcoin wallet leaves a fingerprint. When software constructs a
-          transaction it makes dozens of small decisions — input ordering,
-          locktime values, signature encoding, fee estimation — that vary
-          systematically across implementations. These patterns are observable
-          on-chain and allow an adversary to identify which wallet created a
-          transaction, even without any off-chain data.
-        </p>
-        <p class="text-gray-400">
-          Fingerprints are especially damaging for collaborative transactions,
-          where multiple parties contribute inputs to a single transaction. If
-          the participants use different wallet software, signature and script
-          differences can partition the inputs by owner — undoing the privacy
-          the collaboration was meant to provide. Even when intra-transaction
-          signals are uniform, an analyst can look backward and forward in the
-          transaction graph where each wallet's fingerprints reappear. See how
-          this plays out for
-          <a
-            href="https://payjoin.org/blog/2026/03/25/wallet-fingerprints-payjoin-privacy/"
-            target="_blank"
-            rel="noopener"
-            class="text-pink-400 hover:underline"
-            >PayJoin</a
-          >.
-        </p>
-        <p class="text-gray-400">
-          This builds on prior work by
-          <a
-            href="https://ishaana.com/blog/wallet_fingerprinting"
-            target="_blank"
-            rel="noopener"
-            class="text-pink-400 hover:underline"
-            >Ishaana</a
-          >, who catalogued wallet fingerprints through manual code inspection
-          and hands-on interaction with each wallet.
-          <a
-            href="https://www.discrypt.cat/category/docker-deployment/"
-            target="_blank"
-            rel="noopener"
-            class="text-pink-400 hover:underline"
-            >Ongoing work</a
-          >
-          takes a more dynamic approach: wallets are run in containers and
-          exercised programmatically to construct real transactions, with
-          fingerprints extracted directly from the resulting on-chain data. This
-          makes the comparison easier to reproduce and keep current as wallets
-          evolve.
-        </p>
-      </section>
+  <section>
+    <details>
+    <summary class="kicker">// context</summary>
+    <p>
+      Every Bitcoin wallet leaves a fingerprint. When software constructs a
+      transaction it makes dozens of small decisions — input ordering,
+      locktime values, signature encoding, fee estimation — that vary
+      systematically across implementations. These patterns are observable
+      on-chain and allow an adversary to identify which wallet created a
+      transaction, even without any off-chain data.
+    </p>
+    <p>
+      Fingerprints are especially damaging for collaborative transactions,
+      where multiple parties contribute inputs to a single transaction. If
+      the participants use different wallet software, signature and script
+      differences can partition the inputs by owner — undoing the privacy
+      the collaboration was meant to provide. Even when intra-transaction
+      signals are uniform, an analyst can look backward and forward in the
+      transaction graph where each wallet's fingerprints reappear. See how
+      this plays out for
+      <a href="https://payjoin.org/blog/2026/03/25/wallet-fingerprints-payjoin-privacy/" target="_blank" rel="noopener">PayJoin</a>.
+    </p>
+    <p>
+      This builds on prior work by
+      <a href="https://ishaana.com/blog/wallet_fingerprinting" target="_blank" rel="noopener">Ishaana</a>,
+      who catalogued wallet fingerprints through manual code inspection
+      and hands-on interaction with each wallet.
+      <a href="https://www.discrypt.cat/category/docker-deployment/" target="_blank" rel="noopener">Ongoing work</a>
+      takes a more dynamic approach: wallets are run in containers and
+      exercised programmatically to construct real transactions, with
+      fingerprints extracted directly from the resulting on-chain data. This
+      makes the comparison easier to reproduce and keep current as wallets
+      evolve.
+    </p>
+    </details>
+  </section>
 
-      <section
-        class="max-w-2xl mx-auto text-sm leading-relaxed space-y-4"
-        style="border-left: 2px solid #831843; padding-left: 1.25rem"
-      >
-        <p class="text-xs tracking-widest uppercase text-pink-800 mb-1">
-          // clustering
-        </p>
-        <p class="text-gray-400">
-          Beyond collaborative transactions, fingerprints are a powerful input
-          to
-          <a
-            href="https://spiralxyz.substack.com/p/the-scroll-2-wallet-clustering-basics"
-            target="_blank"
-            rel="noopener"
-            class="text-pink-400 hover:underline"
-            >wallet clustering</a
-          >, the process of grouping addresses and transactions that likely
-          belong to the same entity. Standard clustering leans on heuristics
-          like common-input-ownership and change detection. Fingerprints add
-          another dimension: if two transactions share the same characteristic
-          construction quirks, they were probably created by the same wallet
-          software, which corroborates or extends a cluster that on-chain
-          heuristics alone would leave ambiguous.
-        </p>
-      </section>
+  <section>
+    <details>
+    <summary class="kicker">// clustering</summary>
+    <p>
+      Beyond collaborative transactions, fingerprints are a powerful input
+      to
+      <a href="https://spiralxyz.substack.com/p/the-scroll-2-wallet-clustering-basics" target="_blank" rel="noopener">wallet clustering</a>,
+      the process of grouping addresses and transactions that likely
+      belong to the same entity. Standard clustering leans on heuristics
+      like common-input-ownership and change detection. Fingerprints add
+      another dimension: if two transactions share the same characteristic
+      construction quirks, they were probably created by the same wallet
+      software, which corroborates or extends a cluster that on-chain
+      heuristics alone would leave ambiguous.
+    </p>
+    </details>
+  </section>
+</article>
 
-      <footer
-        class="text-center text-gray-600 text-xs pt-4 border-t border-gray-800"
-      >
-        <p>
-          © 2026
-          <a
-            href="https://arminsabouri.com"
-            target="_blank"
-            rel="noopener"
-            class="hover:text-gray-400"
-            >Armin Sabouri</a
-          >
-          & Isaac Kiniti ·
-          <a
-            href="https://github.com/mit-dci/WalletFingerprints.info"
-            class="hover:text-gray-400"
-            >source</a
-          >
-        </p>
-      </footer>
+<section class="field">
+  <header>
+    <div class="mast">
+      <p id="window"></p>
     </div>
-  </body>
+    <div class="tools">
+      <div class="modes">
+        <button type="button" id="mode-scale" class="on">True scale</button>
+        <button type="button" id="mode-side">Side by side</button>
+      </div>
+      <div class="modes pager" id="pager" hidden>
+        <button type="button" id="page-prev" aria-label="Previous page">‹</button>
+        <span id="page-num"></span>
+        <button type="button" id="page-next" aria-label="Next page">›</button>
+      </div>
+      <div class="scale-readout" id="scale-readout"></div>
+    </div>
+  </header>
+  <nav class="ladder" id="ladder" aria-label="Granularity"></nav>
+  <main>
+    <canvas id="field"></canvas>
+    <div id="tip" role="tooltip" hidden></div>
+  </main>
+  <aside>
+    <section id="readout">
+      <p class="kicker">Selection</p>
+      <h1 id="sel-title">All transactions</h1>
+      <p class="ratio" id="sel-ratio"></p>
+      <p class="share" id="sel-share"></p>
+      <p class="note" id="sel-note"></p>
+      <div class="mix" id="sel-mix"></div>
+    </section>
+    <!-- Labels are disabled for now to declutter the UI.
+    <section>
+      <p class="kicker">Labeled fingerprints</p>
+      <form id="label-form">
+        <input id="label-name" type="text" maxlength="40" placeholder="Name this selection" autocomplete="off">
+        <button type="submit">Set label</button>
+      </form>
+      <ul id="labels"></ul>
+    </section>
+    -->
+    <section>
+      <p class="kicker">Filter <button type="button" id="reset">Reset</button></p>
+      <div class="join" id="join" role="group" aria-label="Combine filters">
+        <button type="button" id="join-and" class="on">And</button>
+        <button type="button" id="join-or">Or</button>
+      </div>
+      <div id="filters"></div>
+    </section>
+  </aside>
+</section>
+
+<footer>
+  <p>
+    © 2026
+    <a href="https://arminsabouri.com" target="_blank" rel="noopener">Armin Sabouri</a>
+    &amp; Isaac Kiniti ·
+    <a href="https://github.com/mit-dci/IsMyWalletUnique">source</a> ·
+    inspired by
+    <a href="https://amiunique.org/fingerprint" target="_blank" rel="noopener">amiunique.org</a>
+  </p>
+</footer>
+<script src="print.js?v=8"></script>
+<script src="app.js?v=26"></script>
+</body>
 </html>

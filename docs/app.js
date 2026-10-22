@@ -1,11 +1,14 @@
 const LADDER = [
-  { title: "Population", key: null },
+  { title: "All transactions", key: null },
   { title: "Version", key: "version" },
   { title: "Sequence", key: "seq" },
   { title: "Locktime", key: "lock" },
+  { title: "Input order", key: "input_order" },
+  { title: "Output order", key: "output_order" },
   { title: "Script", key: "family" },
-  { title: "Signature", key: "sighash" },
-  { title: "Runestone", key: "rune" },
+  { title: "Sighash", key: "sighash" },
+  { title: "Low-R grinding", key: "lowr" },
+  { title: "Data Carrying Mechanism", key: "data" },
   { title: "Fingerprint", key: "state" },
 ];
 
@@ -14,7 +17,7 @@ const LABEL_COLORS = ["#f2efe6", "#e07a5f", "#7dba9a", "#7aa2c4", "#d4c15a", "#c
 
 function clusterLabel(key, value, fps) {
   if (!key || value === "all" || value == null) return "All transactions";
-  if (key === "state") return fingerprintCode(fps[0]);
+  if (key === "state") return fingerprintWords(fps[0]).join(" · ");
   return facetLabel(key, value);
 }
 const CELL = 3;
@@ -32,7 +35,9 @@ function loadLabels() {
     return [];
   }
 }
-let labels = loadLabels();
+// Labels are disabled for now to declutter the UI.
+// let labels = loadLabels();
+let labels = [];
 
 const canvas = document.getElementById("field");
 const ctx = canvas.getContext("2d");
@@ -46,6 +51,16 @@ let cam = { x: 28, y: 28, s: 1 };
 let camTo = { x: 28, y: 28, s: 1 };
 let animating = false;
 let sizedFor = "";
+let cellBudget = 1;
+let pages = [];
+let page = 0;
+let pageKey = "";
+let pagedFor = "";
+let pageUnit = 0;
+// Smallest camera scale the unpaged layout may need to fit the canvas.
+const MIN_FIT = 0.75;
+// Fewest boxes the smallest group on a page gets.
+const MIN_CELLS = 16;
 
 function colorForIndex(i) {
   if (i < PALETTE.length) return PALETTE[i];
@@ -69,10 +84,6 @@ function assignColors() {
   payload.fingerprints.forEach((fp, i) => {
     colorOf[`state:${fp.state}`] = colorForIndex(i);
   });
-}
-
-function paintKey() {
-  return LADDER[depth].key || "version";
 }
 
 function passes(fp) {
@@ -114,8 +125,8 @@ function sizeCanvas() {
     sizedFor = key;
     const availW = Math.max(STRIDE, w - 56);
     const availH = Math.max(STRIDE, h - 64);
-    const budget = Math.max(1, Math.floor((availW / STRIDE) * (availH / STRIDE) * 0.9));
-    baseUnit = Math.max(1, Math.round(total / budget));
+    cellBudget = Math.max(1, Math.floor((availW / STRIDE) * (availH / STRIDE) * 0.9));
+    baseUnit = Math.max(1, Math.round(total / cellBudget));
     homeS = 1;
   }
 }
@@ -143,14 +154,89 @@ function layoutGroups() {
     };
   }).sort((a, b) => b.n - a.n);
 
-  const rowLimit = mode === "side"
-    ? Math.max(canvas.clientWidth * 3, 2400)
-    : Math.max(STRIDE * 8, canvas.clientWidth - 56);
+  const key = JSON.stringify([depth, path, join, FACETS.map(([k]) => [...filters[k]])]);
+  if (key !== pageKey) {
+    pageKey = key;
+    page = 0;
+  }
+  if (`${key}@${sizedFor}` !== pagedFor) {
+    pagedFor = `${key}@${sizedFor}`;
+    pages = paginate(seeds);
+    page = Math.min(page, pages.length - 1);
+  }
+  pageUnit = pages[page].u;
+  const rowLimit = mode === "side" ? Math.max(canvas.clientWidth * 3, 2400) : scaleRowLimit();
+  groups = place(pages[page].list, pageUnit, rowLimit);
+  renderPager();
+}
+
+function scaleRowLimit() {
+  return Math.max(STRIDE * 8, canvas.clientWidth - 56);
+}
+
+function fits(list, u, minScale) {
+  const b = bounds(place(list, u, scaleRowLimit()));
+  return Math.min((canvas.clientWidth - 48) / b.w, (canvas.clientHeight - 48) / b.h) >= minScale;
+}
+
+// Smallest unit at which the list fits the canvas unzoomed, or null if it never does.
+function unitToFit(list) {
+  const most = list[0].n;
+  if (!fits(list, most, 1)) return null;
+  let lo = Math.max(1, Math.round(list.reduce((s, g) => s + g.n, 0) / cellBudget)) - 1;
+  let hi = most;
+  while (hi - lo > 1) {
+    const mid = Math.floor((lo + hi) / 2);
+    if (fits(list, mid, 1)) hi = mid;
+    else lo = mid;
+  }
+  return hi;
+}
+
+// Each page takes the most groups that fit the canvas at the page's own scale
+// while the smallest still gets MIN_CELLS boxes.
+function paginate(seeds) {
+  if (!seeds.length || fits(seeds, baseUnit, MIN_FIT)) return [{ list: seeds, u: baseUnit }];
+  const out = [];
+  for (let s = 0; s < seeds.length;) {
+    const ok = (c) => {
+      const list = seeds.slice(s, s + c);
+      const u = unitToFit(list);
+      return u != null && (u === 1 || list[list.length - 1].n / u >= MIN_CELLS);
+    };
+    let lo = 1;
+    let hi = 2;
+    while (s + hi <= seeds.length && ok(hi)) {
+      lo = hi;
+      hi *= 2;
+    }
+    hi = Math.min(hi, seeds.length - s + 1);
+    while (hi - lo > 1) {
+      const mid = (lo + hi) >> 1;
+      if (ok(mid)) lo = mid;
+      else hi = mid;
+    }
+    const list = seeds.slice(s, s + lo);
+    out.push({ list, u: unitToFit(list) || list[0].n });
+    s += lo;
+  }
+  return out;
+}
+
+function renderPager() {
+  document.getElementById("pager").hidden = pages.length < 2;
+  document.getElementById("page-num").textContent = `${page + 1} / ${pages.length}`;
+  document.getElementById("page-prev").disabled = page === 0;
+  document.getElementById("page-next").disabled = page === pages.length - 1;
+  document.getElementById("scale-readout").textContent = `1 box = ${pageUnit.toLocaleString()} ${unit}`;
+}
+
+function place(seeds, u, rowLimit) {
   let x = 0;
   let y = 0;
   let rowH = 0;
-  groups = seeds.map((g) => {
-    const cells = Math.max(1, Math.round(g.n / baseUnit));
+  return seeds.map((g) => {
+    const cells = Math.max(1, Math.round(g.n / u));
     const cols = Math.max(1, Math.ceil(Math.sqrt(cells * 1.5)));
     const rows = Math.ceil(cells / cols);
     const gw = cols * STRIDE - GAP;
@@ -236,9 +322,7 @@ function layout(opts = {}) {
   aim(!opts.animate);
   renderReadout();
   renderLadder();
-  renderLegend();
   renderFilters();
-  document.getElementById("scale-readout").textContent = `1 box = ${baseUnit.toLocaleString()} ${unit}`;
 }
 
 function paintMark(x, y, span, accent) {
@@ -272,8 +356,6 @@ function draw() {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, w, h);
   ctx.textBaseline = "top";
-  const mosaic = !LADDER[depth].key;
-  const key = paintKey();
   const labels = [];
   const span = CELL * cam.s;
   const viewL = -cam.x / cam.s - STRIDE;
@@ -296,7 +378,7 @@ function draw() {
       let n = fi === g.fps.length - 1 ? g.cells - i : Math.round((fp.n / g.n) * g.cells);
       n = Math.max(0, Math.min(n, g.cells - i));
       const lab = labelOf(fp);
-      const fill = mosaic ? (colorOf[`${key}:${fp[key]}`] || "#8e8a82") : g.color;
+      const fill = g.color;
       ctx.fillStyle = fill;
       for (let k = 0; k < n; k += 1) {
         const idx = i + k;
@@ -379,7 +461,6 @@ function dive(group) {
   document.getElementById("mode-side").classList.remove("on");
   renderReadout();
   renderLadder();
-  renderLegend();
   renderFilters();
   animate();
 }
@@ -388,38 +469,6 @@ function shareText(n) {
   const p = total ? n / total : 0;
   const oneIn = oneInCount(p);
   return { p, oneIn: oneIn == null ? "—" : oneIn };
-}
-
-function renderLegend() {
-  const el = document.getElementById("legend");
-  const key = paintKey();
-  const facet = FACETS.find((f) => f[0] === key);
-  const name = document.createElement("span");
-  name.className = "legend-name";
-  name.textContent = depth === 0 ? "Color is version" : key === "state"
-    ? "Code is version · sequence · lock · script · sighash · rune"
-    : `Color is ${facet ? facet[1].toLowerCase() : "one fingerprint"}`;
-  el.innerHTML = "";
-  el.append(name);
-  if (key === "state") return;
-  const counts = new Map();
-  for (const fp of payload.fingerprints.filter(passes)) {
-    if (fp[key] == null || fp[key] === "") continue;
-    counts.set(fp[key], (counts.get(fp[key]) || 0) + fp.n);
-  }
-  const ranked = [...counts.entries()].sort((a, b) => b[1] - a[1]);
-  ranked.slice(0, 8).forEach(([value]) => {
-    const span = document.createElement("span");
-    const sw = document.createElement("i");
-    sw.style.background = colorOf[`${key}:${value}`] || "#8e8a82";
-    span.append(sw, document.createTextNode(facetLabel(key, value)));
-    el.append(span);
-  });
-  if (ranked.length > 8) {
-    const more = document.createElement("span");
-    more.textContent = `+${ranked.length - 8} more`;
-    el.append(more);
-  }
 }
 
 function mixRow(key, value, p, text) {
@@ -490,67 +539,27 @@ function renderReadout() {
   }
   const glue = join === "or" ? " or " : " · ";
   const matched = payload.fingerprints.filter(passes);
-  const fallback = matched.length === 1 ? fingerprintCode(matched[0]) : (chosen.join(glue) || `All ${unit}`);
+  const fallback = chosen.join(glue) || `All ${unit}`;
   const target = hover
     ? { title: clusterLabel(LADDER[depth].key, hover.value, hover.fps), n: hover.n, fps: hover.fps }
     : { title: fallback, n: viewN, fps: matched };
   const title = document.getElementById("sel-title");
   title.textContent = target.title || `All ${unit}`;
-  title.classList.toggle("code", typeof target.title === "string" && target.title.includes("·"));
-  title.title = hover && LADDER[depth].key ? tipFor(LADDER[depth].key, hover.value) : "";
+  title.title = hover && LADDER[depth].key && LADDER[depth].key !== "state" ? tipFor(LADDER[depth].key, hover.value) : "";
   const { p, oneIn } = shareText(target.n);
-  document.getElementById("sel-ratio").textContent = typeof oneIn === "number" ? `1 out of ${oneIn.toLocaleString()}` : "—";
+  document.getElementById("sel-ratio").textContent = target.n === total ? "" : typeof oneIn === "number" ? `1 out of ${oneIn.toLocaleString()}` : "—";
   document.getElementById("sel-share").textContent = `${target.n.toLocaleString()} ${unit} · ${(p * 100).toFixed(2)}%`;
   const note = document.getElementById("sel-note");
   const mix = document.getElementById("sel-mix");
   let noteText = "";
   if (hover && hover.value === "other") noteText = tipFor(LADDER[depth].key, hover.value);
-  else if (hover && hover.value === "v_other") noteText = TIP.v_other;
-  if (hover && hover.fps.length === 1) {
+  if (hover && hover.fps.length === 1 && LADDER[depth].key !== "state") {
     const words = fingerprintWords(hover.fps[0]).join(" · ");
     noteText = noteText ? `${noteText} ${words}` : words;
   } else if (!hover && matched.length === 1) noteText = fingerprintWords(matched[0]).join(" · ");
   note.textContent = noteText;
   if (hover && hover.fps.length > 1) renderMix(hover.fps);
   else mix.replaceChildren();
-  const dl = document.getElementById("sel-attrs");
-  dl.innerHTML = "";
-  if (hover || !target.n) return;
-  for (const [key, name] of FACETS) {
-    const picked = filters[key];
-    const mode = modeWithin(target.fps, key);
-    if ((!picked || !picked.size) && !mode) continue;
-    const dt = document.createElement("dt");
-    dt.textContent = name;
-    const dd = document.createElement("dd");
-    if (picked && picked.size) {
-      dt.className = "on";
-      dd.className = "on";
-      dd.textContent = [...picked].map((v) => facetLabel(key, v)).join(" or ");
-    } else {
-      dd.textContent = `${facetLabel(key, mode.value)}  ${(100 * mode.n / target.n).toFixed(1)}%`;
-      dd.title = tipFor(key, mode.value);
-    }
-    dl.append(dt, dd);
-  }
-}
-
-function modeWithin(fps, key) {
-  const counts = new Map();
-  for (const fp of fps) {
-    const value = fp[key];
-    if (value == null || value === "") continue;
-    counts.set(value, (counts.get(value) || 0) + fp.n);
-  }
-  let value = null;
-  let n = -1;
-  for (const [candidate, count] of counts) {
-    if (count > n) {
-      value = candidate;
-      n = count;
-    }
-  }
-  return value == null ? null : { value, n };
 }
 
 function renderLadder() {
@@ -662,6 +671,45 @@ function renderLabels() {
   });
 }
 
+const tip = document.getElementById("tip");
+
+function placeTip(e) {
+  if (!hover) {
+    tip.hidden = true;
+    return;
+  }
+  const r = canvas.getBoundingClientRect();
+  const x = e.clientX - r.left;
+  const y = e.clientY - r.top;
+  const { p } = shareText(hover.n);
+  tip.replaceChildren();
+  // Facets every fingerprint in the group shares.
+  const shared = FACETS.filter(([key]) => hover.fps.every((fp) => fp[key] === hover.fps[0][key]));
+  if (shared.length) {
+    const dl = document.createElement("dl");
+    for (const [key, title] of shared) {
+      const dt = document.createElement("dt");
+      dt.textContent = title;
+      const dd = document.createElement("dd");
+      dd.textContent = facetLabel(key, hover.fps[0][key]);
+      dl.append(dt, dd);
+    }
+    tip.append(dl);
+  } else {
+    const name = document.createElement("strong");
+    name.textContent = clusterLabel(LADDER[depth].key, hover.value, hover.fps);
+    tip.append(name);
+  }
+  const count = document.createElement("span");
+  count.textContent = `${hover.n.toLocaleString()} ${unit} · ${(p * 100).toFixed(2)}%`;
+  tip.append(count);
+  tip.hidden = false;
+  const flipX = x + 16 + tip.offsetWidth > r.width;
+  const flipY = y + 16 + tip.offsetHeight > r.height;
+  tip.style.left = `${flipX ? x - 12 - tip.offsetWidth : x + 16}px`;
+  tip.style.top = `${flipY ? y - 12 - tip.offsetHeight : y + 16}px`;
+}
+
 canvas.addEventListener("mousemove", (e) => {
   const r = canvas.getBoundingClientRect();
   const g = groupAt(e.clientX - r.left, e.clientY - r.top);
@@ -670,9 +718,11 @@ canvas.addEventListener("mousemove", (e) => {
     draw();
     renderReadout();
   }
+  placeTip(e);
 });
 canvas.addEventListener("mouseleave", () => {
   hover = null;
+  tip.hidden = true;
   draw();
   renderReadout();
 });
@@ -680,6 +730,7 @@ canvas.addEventListener("click", (e) => {
   const r = canvas.getBoundingClientRect();
   const g = groupAt(e.clientX - r.left, e.clientY - r.top);
   if (g) dive(g);
+  placeTip(e);
 });
 let wheelDepth = 0;
 
@@ -690,6 +741,8 @@ function wheelPixels(e) {
 
 canvas.addEventListener("wheel", (e) => {
   if (e.target !== canvas) return;
+  // Let the page scroll until the field section is snapped to the top.
+  if (Math.abs(canvas.closest(".field").getBoundingClientRect().top) > 1) return;
   const { x, y } = wheelPixels(e);
   if (e.ctrlKey) {
     e.preventDefault();
@@ -710,27 +763,29 @@ canvas.addEventListener("wheel", (e) => {
   hover = groupAt(e.clientX - rect.left, e.clientY - rect.top);
   draw();
   renderReadout();
+  placeTip(e);
 }, { passive: false });
 
-document.getElementById("label-form").addEventListener("submit", (e) => {
-  e.preventDefault();
-  const input = document.getElementById("label-name");
-  const name = input.value.trim();
-  if (!name) return;
-  const spec = {};
-  for (const [k, set] of Object.entries(filters)) spec[k] = [...set];
-  labels.push({
-    name,
-    color: LABEL_COLORS[labels.length % LABEL_COLORS.length],
-    path: path.map((s) => ({ ...s })),
-    filters: spec,
-    join,
-  });
-  localStorage.setItem("fp-labels", JSON.stringify(labels));
-  input.value = "";
-  renderLabels();
-  layout();
-});
+// Labels are disabled for now to declutter the UI.
+// document.getElementById("label-form").addEventListener("submit", (e) => {
+//   e.preventDefault();
+//   const input = document.getElementById("label-name");
+//   const name = input.value.trim();
+//   if (!name) return;
+//   const spec = {};
+//   for (const [k, set] of Object.entries(filters)) spec[k] = [...set];
+//   labels.push({
+//     name,
+//     color: LABEL_COLORS[labels.length % LABEL_COLORS.length],
+//     path: path.map((s) => ({ ...s })),
+//     filters: spec,
+//     join,
+//   });
+//   localStorage.setItem("fp-labels", JSON.stringify(labels));
+//   input.value = "";
+//   renderLabels();
+//   layout();
+// });
 
 function setJoin(next) {
   join = next;
@@ -740,6 +795,19 @@ function setJoin(next) {
 }
 document.getElementById("join-and").onclick = () => setJoin("and");
 document.getElementById("join-or").onclick = () => setJoin("or");
+document.getElementById("reset").onclick = () => {
+  FACETS.forEach(([k]) => filters[k].clear());
+  path = [];
+  setJoin("and");
+};
+
+function turnPage(dir) {
+  page = Math.max(0, Math.min(pages.length - 1, page + dir));
+  hover = null;
+  layout();
+}
+document.getElementById("page-prev").onclick = () => turnPage(-1);
+document.getElementById("page-next").onclick = () => turnPage(1);
 
 document.getElementById("mode-scale").onclick = () => {
   mode = "scale";
@@ -764,6 +832,6 @@ fetch("fingerprints.json").then((r) => r.json()).then((data) => {
   assignColors();
   document.getElementById("window").textContent = windowLine(data);
   renderFilters();
-  renderLabels();
+  // renderLabels();
   layout();
 });
