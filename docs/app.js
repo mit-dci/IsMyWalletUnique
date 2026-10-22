@@ -683,11 +683,26 @@ function placeTip(e) {
   const y = e.clientY - r.top;
   const { p } = shareText(hover.n);
   tip.replaceChildren();
-  const name = document.createElement("strong");
-  name.textContent = clusterLabel(LADDER[depth].key, hover.value, hover.fps);
+  // Facets every fingerprint in the group shares.
+  const shared = FACETS.filter(([key]) => hover.fps.every((fp) => fp[key] === hover.fps[0][key]));
+  if (shared.length) {
+    const dl = document.createElement("dl");
+    for (const [key, title] of shared) {
+      const dt = document.createElement("dt");
+      dt.textContent = title;
+      const dd = document.createElement("dd");
+      dd.textContent = facetLabel(key, hover.fps[0][key]);
+      dl.append(dt, dd);
+    }
+    tip.append(dl);
+  } else {
+    const name = document.createElement("strong");
+    name.textContent = clusterLabel(LADDER[depth].key, hover.value, hover.fps);
+    tip.append(name);
+  }
   const count = document.createElement("span");
   count.textContent = `${hover.n.toLocaleString()} ${unit} · ${(p * 100).toFixed(2)}%`;
-  tip.append(name, count);
+  tip.append(count);
   tip.hidden = false;
   const flipX = x + 16 + tip.offsetWidth > r.width;
   const flipY = y + 16 + tip.offsetHeight > r.height;
