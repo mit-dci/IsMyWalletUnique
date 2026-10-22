@@ -73,10 +73,6 @@ function assignColors() {
   });
 }
 
-function paintKey() {
-  return LADDER[depth].key || "version";
-}
-
 function passes(fp) {
   for (const step of path) {
     if (fp[step.key] !== step.value) return false;
@@ -238,7 +234,6 @@ function layout(opts = {}) {
   aim(!opts.animate);
   renderReadout();
   renderLadder();
-  renderLegend();
   renderFilters();
   document.getElementById("scale-readout").textContent = `1 box = ${baseUnit.toLocaleString()} ${unit}`;
 }
@@ -379,7 +374,6 @@ function dive(group) {
   document.getElementById("mode-side").classList.remove("on");
   renderReadout();
   renderLadder();
-  renderLegend();
   renderFilters();
   animate();
 }
@@ -388,39 +382,6 @@ function shareText(n) {
   const p = total ? n / total : 0;
   const oneIn = oneInCount(p);
   return { p, oneIn: oneIn == null ? "—" : oneIn };
-}
-
-function renderLegend() {
-  const el = document.getElementById("legend");
-  const key = paintKey();
-  const facet = FACETS.find((f) => f[0] === key);
-  const name = document.createElement("span");
-  name.className = "legend-name";
-  el.innerHTML = "";
-  if (depth === 0) return;
-  name.textContent = key === "state"
-    ? "Color is fingerprint"
-    : `Color is ${facet ? facet[1].toLowerCase() : "one fingerprint"}`;
-  el.append(name);
-  if (key === "state") return;
-  const counts = new Map();
-  for (const fp of payload.fingerprints.filter(passes)) {
-    if (fp[key] == null || fp[key] === "") continue;
-    counts.set(fp[key], (counts.get(fp[key]) || 0) + fp.n);
-  }
-  const ranked = [...counts.entries()].sort((a, b) => b[1] - a[1]);
-  ranked.slice(0, 8).forEach(([value]) => {
-    const span = document.createElement("span");
-    const sw = document.createElement("i");
-    sw.style.background = colorOf[`${key}:${value}`] || "#8e8a82";
-    span.append(sw, document.createTextNode(facetLabel(key, value)));
-    el.append(span);
-  });
-  if (ranked.length > 8) {
-    const more = document.createElement("span");
-    more.textContent = `+${ranked.length - 8} more`;
-    el.append(more);
-  }
 }
 
 function mixRow(key, value, p, text) {
@@ -623,6 +584,30 @@ function renderLabels() {
   });
 }
 
+const tip = document.getElementById("tip");
+
+function placeTip(e) {
+  if (!hover) {
+    tip.hidden = true;
+    return;
+  }
+  const r = canvas.getBoundingClientRect();
+  const x = e.clientX - r.left;
+  const y = e.clientY - r.top;
+  const { p } = shareText(hover.n);
+  tip.replaceChildren();
+  const name = document.createElement("strong");
+  name.textContent = clusterLabel(LADDER[depth].key, hover.value, hover.fps);
+  const count = document.createElement("span");
+  count.textContent = `${hover.n.toLocaleString()} ${unit} · ${(p * 100).toFixed(2)}%`;
+  tip.append(name, count);
+  tip.hidden = false;
+  const flipX = x + 16 + tip.offsetWidth > r.width;
+  const flipY = y + 16 + tip.offsetHeight > r.height;
+  tip.style.left = `${flipX ? x - 12 - tip.offsetWidth : x + 16}px`;
+  tip.style.top = `${flipY ? y - 12 - tip.offsetHeight : y + 16}px`;
+}
+
 canvas.addEventListener("mousemove", (e) => {
   const r = canvas.getBoundingClientRect();
   const g = groupAt(e.clientX - r.left, e.clientY - r.top);
@@ -631,9 +616,11 @@ canvas.addEventListener("mousemove", (e) => {
     draw();
     renderReadout();
   }
+  placeTip(e);
 });
 canvas.addEventListener("mouseleave", () => {
   hover = null;
+  tip.hidden = true;
   draw();
   renderReadout();
 });
@@ -641,6 +628,7 @@ canvas.addEventListener("click", (e) => {
   const r = canvas.getBoundingClientRect();
   const g = groupAt(e.clientX - r.left, e.clientY - r.top);
   if (g) dive(g);
+  placeTip(e);
 });
 let wheelDepth = 0;
 
@@ -673,6 +661,7 @@ canvas.addEventListener("wheel", (e) => {
   hover = groupAt(e.clientX - rect.left, e.clientY - rect.top);
   draw();
   renderReadout();
+  placeTip(e);
 }, { passive: false });
 
 // Labels are disabled for now to declutter the UI.

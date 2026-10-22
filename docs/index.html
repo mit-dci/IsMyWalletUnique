@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Is My Wallet Unique?</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;1,400&display=swap">
-<link rel="stylesheet" href="css/style.css?v=31">
+<link rel="stylesheet" href="css/style.css?v=32">
 </head>
 <body>
 <article>
@@ -82,11 +82,11 @@
       </div>
       <div class="scale-readout" id="scale-readout"></div>
     </div>
-    <div class="legend" id="legend"></div>
   </header>
   <nav class="ladder" id="ladder" aria-label="Granularity"></nav>
   <main>
     <canvas id="field"></canvas>
+    <div id="tip" role="tooltip" hidden></div>
   </main>
   <aside>
     <section id="readout">
@@ -129,6 +129,6 @@
   </p>
 </footer>
 <script src="print.js?v=6"></script>
-<script src="app.js?v=20"></script>
+<script src="app.js?v=22"></script>
 </body>
 </html>
