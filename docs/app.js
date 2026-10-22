@@ -512,44 +512,6 @@ function renderReadout() {
   note.textContent = noteText;
   if (hover && hover.fps.length > 1) renderMix(hover.fps);
   else mix.replaceChildren();
-  const dl = document.getElementById("sel-attrs");
-  dl.innerHTML = "";
-  if (hover || !target.n) return;
-  for (const [key, name] of FACETS) {
-    const picked = filters[key];
-    const mode = modeWithin(target.fps, key);
-    if ((!picked || !picked.size) && !mode) continue;
-    const dt = document.createElement("dt");
-    dt.textContent = name;
-    const dd = document.createElement("dd");
-    if (picked && picked.size) {
-      dt.className = "on";
-      dd.className = "on";
-      dd.textContent = [...picked].map((v) => facetLabel(key, v)).join(" or ");
-    } else {
-      dd.textContent = `${facetLabel(key, mode.value)}  ${(100 * mode.n / target.n).toFixed(1)}%`;
-      dd.title = tipFor(key, mode.value);
-    }
-    dl.append(dt, dd);
-  }
-}
-
-function modeWithin(fps, key) {
-  const counts = new Map();
-  for (const fp of fps) {
-    const value = fp[key];
-    if (value == null || value === "") continue;
-    counts.set(value, (counts.get(value) || 0) + fp.n);
-  }
-  let value = null;
-  let n = -1;
-  for (const [candidate, count] of counts) {
-    if (count > n) {
-      value = candidate;
-      n = count;
-    }
-  }
-  return value == null ? null : { value, n };
 }
 
 function renderLadder() {

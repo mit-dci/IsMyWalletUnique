@@ -243,7 +243,6 @@ dd { margin: 0; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size
 #reset { float: right; padding: 1px 6px; }
 #reset:hover { color: var(--ink); border-color: var(--dim); }
 .join button.on { color: var(--bg); background: var(--bone); border-color: var(--bone); }
-dt.on, dd.on { color: var(--bone); }
 .facet { margin-bottom: 12px; }
 .facet h2 {
   margin: 0 0 6px;
