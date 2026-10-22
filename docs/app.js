@@ -4,7 +4,7 @@ const LADDER = [
   { title: "Sequence", key: "seq" },
   { title: "Locktime", key: "lock" },
   { title: "Script", key: "family" },
-  { title: "Signature", key: "sighash" },
+  { title: "Sighash", key: "sighash" },
   { title: "Data Carrying Mechanism", key: "data" },
   { title: "Fingerprint", key: "state" },
 ];

@@ -7,7 +7,7 @@ const FACETS = [
   ["seq", "Sequence"],
   ["lock", "Locktime"],
   ["family", "Script"],
-  ["sighash", "Signature"],
+  ["sighash", "Sighash"],
   ["data", "Data Carrying Mechanism"],
 ];
 
