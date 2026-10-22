@@ -7,6 +7,7 @@ const LADDER = [
   { title: "Output order", key: "output_order" },
   { title: "Script", key: "family" },
   { title: "Sighash", key: "sighash" },
+  { title: "Low-R grinding", key: "lowr" },
   { title: "Data Carrying Mechanism", key: "data" },
   { title: "Fingerprint", key: "state" },
 ];

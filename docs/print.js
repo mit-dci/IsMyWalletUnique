@@ -1,6 +1,5 @@
 /* Facet values arrive as the collector's names (data-collection/features.md),
-   with sets joined by "+". Display names are applied only when rendering.
-   Signature length is not a habit: low-r grinding is folded away. */
+   with sets joined by "+". Display names are applied only when rendering. */
 
 const FACETS = [
   ["version", "Version"],
@@ -10,6 +9,7 @@ const FACETS = [
   ["output_order", "Output order"],
   ["family", "Script"],
   ["sighash", "Sighash"],
+  ["lowr", "Low-R grinding"],
   ["data", "Data Carrying Mechanism"],
 ];
 
@@ -40,6 +40,7 @@ const LABEL = {
     "ALL|ANYONECANPAY": "ALL|ACP", "NONE|ANYONECANPAY": "NONE|ACP", "SINGLE|ANYONECANPAY": "SINGLE|ACP",
     UNKNOWN: "unknown",
   },
+  lowr: { true: "yes", false: "no" },
   data: {
     none: "none", op_return: "OP_RETURN", op_return_runestone: "runestone", reveals_inscription: "inscription",
     op_return_witness_commitment: "witness commitment", op_return_omni: "Omni",
@@ -111,9 +112,7 @@ function collapsePrints(rows) {
     const state = FACETS.map(([key]) => fp[key]).join("|");
     const prev = by.get(state);
     if (!prev) {
-      const copy = { ...fp, state };
-      delete copy.lowr;
-      by.set(state, copy);
+      by.set(state, { ...fp, state });
     } else prev.n += fp.n;
   }
   return [...by.values()].sort((a, b) => b.n - a.n).map((fp, id) => ({ ...fp, id }));
