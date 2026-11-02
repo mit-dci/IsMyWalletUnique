@@ -323,6 +323,7 @@ function layout(opts = {}) {
   renderReadout();
   renderLadder();
   renderFilters();
+  writeUrl();
 }
 
 function paintMark(x, y, span, accent) {
@@ -462,6 +463,7 @@ function dive(group) {
   renderReadout();
   renderLadder();
   renderFilters();
+  writeUrl();
   animate();
 }
 
@@ -801,6 +803,31 @@ document.getElementById("reset").onclick = () => {
   setJoin("and");
 };
 
+function writeUrl() {
+  const q = new URLSearchParams();
+  for (const [key] of FACETS) filters[key].forEach((value) => q.append(key, value));
+  if (join !== "and") q.set("join", join);
+  if (LADDER[depth].key) q.set("depth", LADDER[depth].key);
+  path.forEach((step) => q.append("path", step.key));
+  const query = q.toString();
+  const search = query && `?${query}`;
+  if (search !== location.search) history.replaceState(null, "", location.pathname + search + location.hash);
+}
+
+function readUrl() {
+  const q = new URLSearchParams(location.search);
+  const known = (key, value) => payload.fingerprints.some((fp) => fp[key] === value);
+  for (const [key] of FACETS) {
+    q.getAll(key).filter((value) => value && known(key, value)).forEach((value) => filters[key].add(value));
+  }
+  depth = Math.max(0, LADDER.findIndex((step) => step.key === q.get("depth")));
+  const named = q.getAll("path");
+  path = LADDER.slice(1, depth)
+    .filter((step) => named.includes(step.key) && filters[step.key].size === 1)
+    .map((step) => ({ key: step.key, value: [...filters[step.key]][0] }));
+  setJoin(q.get("join") === "or" ? "or" : "and");
+}
+
 function turnPage(dir) {
   page = Math.max(0, Math.min(pages.length - 1, page + dir));
   hover = null;
@@ -833,5 +860,5 @@ fetch("fingerprints.json").then((r) => r.json()).then((data) => {
   document.getElementById("window").textContent = windowLine(data);
   renderFilters();
   // renderLabels();
-  layout();
+  readUrl();
 });
