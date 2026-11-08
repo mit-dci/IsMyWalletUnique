@@ -35,5 +35,9 @@
         };
         default = self.packages.${pkgs.stdenv.hostPlatform.system}.scan;
       });
+
+      devShells = forAllSystems (pkgs: {
+        default = pkgs.mkShell { inputsFrom = [ self.packages.${pkgs.stdenv.hostPlatform.system}.scan ]; };
+      });
     };
 }
