@@ -371,6 +371,7 @@ function draw() {
       x: cam.x + g.x * cam.s,
       y: cam.y + g.y * cam.s - 14,
       w: g.gw * cam.s,
+      n: g.n,
       hot,
     });
     if (g.x + g.gw < viewL || g.y + g.gh < viewT || g.x > viewR || g.y > viewB) continue;
@@ -400,14 +401,25 @@ function draw() {
   ctx.font = '12px "IBM Plex Mono", ui-monospace, monospace';
   ctx.textBaseline = "top";
   const placed = [];
-  labels.sort((a, b) => a.y - b.y || a.x - b.x);
+  // Larger groups claim label space first; a label may overflow its group into free space.
+  labels.sort((a, b) => b.hot - a.hot || b.n - a.n);
+  const free = (lab, tw) => !placed.some((p) => lab.x < p.r + 6 && lab.x + tw > p.l - 6 && Math.abs(lab.y - p.y) < 13);
   for (const lab of labels) {
-    const tw = ctx.measureText(lab.text).width;
-    if (lab.y < 2 || tw > lab.w - 2) continue;
-    const hits = placed.some((p) => lab.x < p.r + 6 && lab.x + tw > p.l - 6 && Math.abs(lab.y - p.y) < 13);
-    if (hits) continue;
+    if (lab.y < 2) continue;
+    let text = lab.text;
+    let tw = ctx.measureText(text).width;
+    if (!free(lab, tw)) {
+      if (tw <= lab.w - 2) continue;
+      // Fall back to the text truncated to the group's own width.
+      while (text.length > 3 && tw > lab.w - 2) {
+        text = text.slice(0, -1);
+        tw = ctx.measureText(`${text}…`).width;
+      }
+      text = `${text}…`;
+      if (tw > lab.w - 2 || !free(lab, tw)) continue;
+    }
     ctx.fillStyle = lab.hot ? "#e6e1d4" : "#8d887b";
-    ctx.fillText(lab.text, lab.x, lab.y);
+    ctx.fillText(text, lab.x, lab.y);
     placed.push({ l: lab.x, r: lab.x + tw, y: lab.y });
   }
 }
