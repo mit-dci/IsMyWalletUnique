@@ -1,7 +1,7 @@
 const NODE = 12;
 const EDGE = 16;
 const VALUE = 8;
-const NONE = 0xFFFFFFFF;
+const NONE = 0xffffffff;
 const ORDINARY = 100_000;
 
 const canvas = document.getElementById("graph");
@@ -25,13 +25,23 @@ let loading = new Map();
 
 function parseState(state) {
   const parts = String(state || "").split("|");
-  const out = { version: "", seq: "", lock: "", sighash: "", family: "", lowr: "", rune: "" };
+  const out = {
+    version: "",
+    seq: "",
+    lock: "",
+    sighash: "",
+    family: "",
+    lowr: "",
+    rune: "",
+  };
   if (parts.length < 5) {
     out.version = state || "—";
     return out;
   }
-  if (["rune", "plain"].includes(parts[parts.length - 1])) out.rune = parts.pop();
-  if (["grind", "nogrind", "na"].includes(parts[parts.length - 1])) out.lowr = parts.pop();
+  if (["rune", "plain"].includes(parts[parts.length - 1]))
+    out.rune = parts.pop();
+  if (["grind", "nogrind", "na"].includes(parts[parts.length - 1]))
+    out.lowr = parts.pop();
   out.version = parts[0];
   out.seq = parts[1];
   out.lock = parts[2];
@@ -84,7 +94,10 @@ function rarityT(n) {
   if (n == null || n < 1 || !(total > 1)) return 1;
   const span = Math.log(total * 0.16) - Math.log(200);
   if (span <= 1e-9) return n >= 200 ? 0 : 1;
-  return 1 - Math.max(0, Math.min(1, (Math.log(Math.max(n, 1)) - Math.log(200)) / span));
+  return (
+    1 -
+    Math.max(0, Math.min(1, (Math.log(Math.max(n, 1)) - Math.log(200)) / span))
+  );
 }
 
 function habitHue(state) {
@@ -99,7 +112,7 @@ function habitHue(state) {
 
 function hslRgb(h, s, l) {
   const c = (1 - Math.abs(2 * l - 1)) * s;
-  const hp = ((h % 360) + 360) % 360 / 60;
+  const hp = (((h % 360) + 360) % 360) / 60;
   const x = c * (1 - Math.abs((hp % 2) - 1));
   let r = 0;
   let g = 0;
@@ -135,11 +148,17 @@ function heatHex(state) {
 }
 
 function toScreen(x, y) {
-  return [(x - cam.x) * cam.sx + canvas.clientWidth / 2, (y - cam.y) * cam.sy + canvas.clientHeight / 2];
+  return [
+    (x - cam.x) * cam.sx + canvas.clientWidth / 2,
+    (y - cam.y) * cam.sy + canvas.clientHeight / 2,
+  ];
 }
 
 function toWorld(x, y) {
-  return [(x - canvas.clientWidth / 2) / cam.sx + cam.x, (y - canvas.clientHeight / 2) / cam.sy + cam.y];
+  return [
+    (x - canvas.clientWidth / 2) / cam.sx + cam.x,
+    (y - canvas.clientHeight / 2) / cam.sy + cam.y,
+  ];
 }
 
 function frame(list, pad) {
@@ -174,8 +193,8 @@ function fitAll(animate) {
   const next = {
     x: meta.max_x / 2,
     y: meta.max_y / 2,
-    sx: canvas.clientWidth / Math.max(1, meta.max_x) * 0.96,
-    sy: canvas.clientHeight / Math.max(1, meta.view_y || meta.max_y) * 0.96,
+    sx: (canvas.clientWidth / Math.max(1, meta.max_x)) * 0.96,
+    sy: (canvas.clientHeight / Math.max(1, meta.view_y || meta.max_y)) * 0.96,
   };
   next.y = (meta.view_y || meta.max_y) / 2;
   atHome = true;
@@ -213,8 +232,8 @@ function fitScale() {
   const yMax = (meta && (meta.view_y || meta.max_y)) || 1;
   const xMax = (meta && meta.max_x) || 1;
   return {
-    sx: canvas.clientWidth / Math.max(1, xMax) * 0.96,
-    sy: canvas.clientHeight / Math.max(1, yMax) * 0.96,
+    sx: (canvas.clientWidth / Math.max(1, xMax)) * 0.96,
+    sy: (canvas.clientHeight / Math.max(1, yMax)) * 0.96,
   };
 }
 
@@ -280,7 +299,10 @@ function visibleHeights() {
 
 async function rangeBuf(url, start, length) {
   if (length <= 0) return new ArrayBuffer(0);
-  const response = await fetch(url, { headers: { Range: `bytes=${start}-${start + length - 1}` }, cache: "no-store" });
+  const response = await fetch(url, {
+    headers: { Range: `bytes=${start}-${start + length - 1}` },
+    cache: "no-store",
+  });
   if (response.status !== 206) throw new Error(String(response.status));
   return response.arrayBuffer();
 }
@@ -333,7 +355,8 @@ function loadHeight(h) {
         rangeBuf("edges.bin", edgeFrom * EDGE, edgeCount * EDGE),
         rangeBuf("kcounts.bin", nodeStart * 4, nodeCount * 4),
       ];
-      if (meta.values) jobs.push(rangeBuf("values.bin", nodeStart * VALUE, nodeCount * VALUE));
+      if (meta.values)
+        jobs.push(rangeBuf("values.bin", nodeStart * VALUE, nodeCount * VALUE));
       const bufs = await Promise.all(jobs);
       const [nodeBuf, edgeBuf, countBuf, valueBuf] = bufs;
       const nodes = decodeNodes(nodeBuf, nodeStart);
@@ -427,7 +450,12 @@ function nearest(nodes, px, py, reach) {
 
 function hit(px, py) {
   const reach = Math.max(8, Math.abs(cam.sy) * 0.45);
-  const focusHit = nearest(focusNodes, px, py, Math.max(reach, Math.abs(cam.sy) * 0.5));
+  const focusHit = nearest(
+    focusNodes,
+    px,
+    py,
+    Math.max(reach, Math.abs(cam.sy) * 0.5),
+  );
   if (focusHit) return focusHit;
   if (!wantVectors()) return null;
   return nearest(nodesInView(), px, py, reach);
@@ -447,7 +475,12 @@ async function pickNearest(px, py) {
     const block = blocks.get(i);
     if (block) pool.push(...block.nodes);
   }
-  return nearest(pool, px, py, Math.max(canvas.clientWidth, canvas.clientHeight));
+  return nearest(
+    pool,
+    px,
+    py,
+    Math.max(canvas.clientWidth, canvas.clientHeight),
+  );
 }
 
 function drawOverview() {
@@ -486,7 +519,11 @@ function drawVectors() {
         ctx.stroke();
         if (drawn.has(edge.child)) continue;
         const child = { i: edge.child, state: edge.state };
-        const marked = (selected && child.i === selected.i) || (hover && child.i === hover.i && (!selected || selected.i !== child.i));
+        const marked =
+          (selected && child.i === selected.i) ||
+          (hover &&
+            child.i === hover.i &&
+            (!selected || selected.i !== child.i));
         paintNode(child, x1, y1, marked);
       }
     }
@@ -494,7 +531,9 @@ function drawVectors() {
   view.sort((a, b) => (b.sats || 0) - (a.sats || 0));
   for (const node of view) {
     const [sx, sy] = toScreen(node.x, node.y);
-    const marked = (selected && node.i === selected.i) || (hover && node.i === hover.i && (!selected || selected.i !== node.i));
+    const marked =
+      (selected && node.i === selected.i) ||
+      (hover && node.i === hover.i && (!selected || selected.i !== node.i));
     paintNode(node, sx, sy, marked);
   }
   drawFocusLabels();
@@ -506,26 +545,47 @@ function rectsHit(a, b) {
 
 function drawFocusLabels() {
   if (!focusNodes.length || Math.min(cam.sx, cam.sy) < 6) return;
-  ctx.font = "500 12px \"IBM Plex Mono\", ui-monospace, monospace";
+  ctx.font = '500 12px "IBM Plex Mono", ui-monospace, monospace';
   ctx.textBaseline = "top";
   ctx.textAlign = "left";
   const occupied = focusNodes.map((node) => {
     const [sx, sy] = toScreen(node.x, node.y);
     const size = markSize(node);
-    return { l: sx - size / 2 - 2, t: sy - size / 2 - 2, r: sx + size / 2 + 2, b: sy + size / 2 + 2 };
+    return {
+      l: sx - size / 2 - 2,
+      t: sy - size / 2 - 2,
+      r: sx + size / 2 + 2,
+      b: sy + size / 2 + 2,
+    };
   });
   const placed = [];
-  const targets = selected ? focusNodes.filter((node) => node.i === selected.i) : focusNodes.slice(0, 1);
+  const targets = selected
+    ? focusNodes.filter((node) => node.i === selected.i)
+    : focusNodes.slice(0, 1);
   for (const node of targets) {
     const text = shareText(stateName(node.state)).ratio;
     const tw = ctx.measureText(text).width;
     const [sx, sy] = toScreen(node.x, node.y);
     const size = markSize(node);
     const options = [
-      { l: sx - tw / 2, t: sy - size / 2 - 20, r: sx + tw / 2, b: sy - size / 2 - 6 },
-      { l: sx + size / 2 + 12, t: sy - 6, r: sx + size / 2 + 12 + tw, b: sy + 8 },
+      {
+        l: sx - tw / 2,
+        t: sy - size / 2 - 20,
+        r: sx + tw / 2,
+        b: sy - size / 2 - 6,
+      },
+      {
+        l: sx + size / 2 + 12,
+        t: sy - 6,
+        r: sx + size / 2 + 12 + tw,
+        b: sy + 8,
+      },
     ];
-    const spot = options.find((box) => !occupied.some((r) => rectsHit(box, r)) && !placed.some((r) => rectsHit(box, r)));
+    const spot = options.find(
+      (box) =>
+        !occupied.some((r) => rectsHit(box, r)) &&
+        !placed.some((r) => rectsHit(box, r)),
+    );
     if (!spot) continue;
     ctx.fillStyle = "#e6e1d4";
     ctx.fillText(text, spot.l, spot.t);
@@ -613,7 +673,10 @@ function renderPanel() {
     h.textContent = meta && meta.count ? meta.count.toLocaleString() : "—";
     const p = document.createElement("p");
     p.className = "share";
-    p.textContent = meta && !meta.complete ? `${meta.blocks.toLocaleString()} / ${meta.block_count.toLocaleString()} blocks` : "transactions";
+    p.textContent =
+      meta && !meta.complete
+        ? `${meta.blocks.toLocaleString()} / ${meta.block_count.toLocaleString()} blocks`
+        : "transactions";
     aside.append(h, p);
     return;
   }
@@ -628,7 +691,8 @@ function renderPanel() {
   code.textContent = label(name);
   const words = document.createElement("p");
   words.className = "words";
-  words.textContent = !name || name === "other" ? "" : fingerprintWords(parts).join(" · ");
+  words.textContent =
+    !name || name === "other" ? "" : fingerprintWords(parts).join(" · ");
   aside.append(h, code, words);
   if (node.sats) {
     const amt = document.createElement("p");
@@ -646,7 +710,7 @@ function renderPanel() {
   bar.className = "meter";
   const fill = document.createElement("i");
   const n = lookup(name);
-  fill.style.width = `${n == null ? 2 : Math.min(100, Math.max(0.8, 100 * n / total))}%`;
+  fill.style.width = `${n == null ? 2 : Math.min(100, Math.max(0.8, (100 * n) / total))}%`;
   fill.style.background = heatHex(name);
   bar.append(fill);
   aside.append(bar);
@@ -679,7 +743,10 @@ function renderPanel() {
     const text = document.createElement("span");
     const rowState = stateName(row.state);
     text.textContent = row.role || label(rowState);
-    text.title = !rowState || rowState === "other" ? "" : fingerprintWords(parseState(rowState)).join(" · ");
+    text.title =
+      !rowState || rowState === "other"
+        ? ""
+        : fingerprintWords(parseState(rowState)).join(" · ");
     const ratio = document.createElement("small");
     ratio.textContent = shareText(stateName(row.state)).ratio;
     if (linked) {
@@ -690,7 +757,14 @@ function renderPanel() {
       b.append(sw, text, tx, ratio);
     } else b.append(sw, text, ratio);
     b.addEventListener("click", (ev) => {
-      if (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey || ev.button !== 0) return;
+      if (
+        ev.metaKey ||
+        ev.ctrlKey ||
+        ev.shiftKey ||
+        ev.altKey ||
+        ev.button !== 0
+      )
+        return;
       if (linked) ev.preventDefault();
       choose(row);
     });
@@ -768,7 +842,11 @@ async function choose(node) {
       parent = null;
     }
   }
-  const self = { ...full, role: "Tx", same: parent ? samePrint(parent.state, full.state) : false };
+  const self = {
+    ...full,
+    role: "Tx",
+    same: parent ? samePrint(parent.state, full.state) : false,
+  };
   focusNodes = [parent, self, ...children].filter(Boolean);
   if (meta.values) {
     for (const row of focusNodes) {
@@ -782,7 +860,11 @@ async function choose(node) {
     }
   }
   for (const row of focusNodes) {
-    if (!row.txid) fetchTxid(row.i).then((id) => { row.txid = id; if (gen === chooseGen) renderPanel(); });
+    if (!row.txid)
+      fetchTxid(row.i).then((id) => {
+        row.txid = id;
+        if (gen === chooseGen) renderPanel();
+      });
   }
   animateTo(frame(focusNodes, 6));
   renderPanel();
@@ -811,10 +893,19 @@ async function refreshMeta() {
   if (!response.ok) return;
   const next = await response.json();
   const prev = meta;
-  const grew = !prev || next.blocks !== prev.blocks || next.complete !== prev.complete || next.values !== prev.values || next.paint !== prev.paint;
+  const grew =
+    !prev ||
+    next.blocks !== prev.blocks ||
+    next.complete !== prev.complete ||
+    next.values !== prev.values ||
+    next.paint !== prev.paint;
   meta = next;
   if (grew) {
-    const replaced = !prev || next.count < prev.count || next.complete !== prev.complete || next.values !== prev.values;
+    const replaced =
+      !prev ||
+      next.count < prev.count ||
+      next.complete !== prev.complete ||
+      next.values !== prev.values;
     if (replaced) {
       blocks.clear();
       selected = null;
@@ -823,15 +914,17 @@ async function refreshMeta() {
       atHome = true;
     }
     if (next.complete) {
-      fetch("../fingerprints.json", { cache: "no-store" }).then((r) => r.json()).then((prints) => {
-        total = prints.total;
-        unit = prints.unit || unit;
-        setCounts(collapsePrints(prints.fingerprints));
-        document.getElementById("window").textContent = windowLine(prints);
-        renderLegend();
-        renderPanel();
-        draw();
-      });
+      fetch("../fingerprints.json", { cache: "no-store" })
+        .then((r) => r.json())
+        .then((prints) => {
+          total = prints.total;
+          unit = prints.unit || unit;
+          setCounts(collapsePrints(prints.fingerprints));
+          document.getElementById("window").textContent = windowLine(prints);
+          renderLegend();
+          renderPanel();
+          draw();
+        });
     }
     loadOverview();
     renderPanel();
@@ -878,7 +971,7 @@ canvas.addEventListener("pointerup", async (e) => {
   const rect = canvas.getBoundingClientRect();
   const px = e.clientX - rect.left;
   const py = e.clientY - rect.top;
-  const node = hit(px, py) || await pickNearest(px, py);
+  const node = hit(px, py) || (await pickNearest(px, py));
   if (node) {
     choose(node);
     return;
@@ -895,26 +988,39 @@ canvas.addEventListener("pointerleave", () => {
   renderPanel();
   draw();
 });
-canvas.addEventListener("wheel", (e) => {
-  if (e.target !== canvas) return;
-  e.preventDefault();
-  const scale = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? canvas.clientHeight : 1;
-  const dy = e.deltaY * scale;
-  if (!dy) return;
-  const rect = canvas.getBoundingClientRect();
-  zoomAt(e.clientX - rect.left, e.clientY - rect.top, Math.exp(-dy * 0.00035));
-}, { passive: false });
+canvas.addEventListener(
+  "wheel",
+  (e) => {
+    if (e.target !== canvas) return;
+    e.preventDefault();
+    const scale =
+      e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? canvas.clientHeight : 1;
+    const dy = e.deltaY * scale;
+    if (!dy) return;
+    const rect = canvas.getBoundingClientRect();
+    zoomAt(
+      e.clientX - rect.left,
+      e.clientY - rect.top,
+      Math.exp(-dy * 0.00035),
+    );
+  },
+  { passive: false },
+);
 
 document.getElementById("fit").onclick = () => fitAll(true);
-window.addEventListener("keydown", (e) => { if (e.key === "Escape") fitAll(true); });
+window.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") fitAll(true);
+});
 window.addEventListener("resize", resize);
 new ResizeObserver(resize).observe(canvas);
 
-fetch("../fingerprints.json", { cache: "no-store" }).then((r) => r.json()).then((prints) => {
-  total = prints.total;
-  unit = prints.unit || "transactions";
-  setCounts(collapsePrints(prints.fingerprints));
-  document.getElementById("window").textContent = windowLine(prints);
-  renderLegend();
-  refreshMeta();
-});
+fetch("../fingerprints.json", { cache: "no-store" })
+  .then((r) => r.json())
+  .then((prints) => {
+    total = prints.total;
+    unit = prints.unit || "transactions";
+    setCounts(collapsePrints(prints.fingerprints));
+    document.getElementById("window").textContent = windowLine(prints);
+    renderLegend();
+    refreshMeta();
+  });

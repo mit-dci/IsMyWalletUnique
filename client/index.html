@@ -1,20 +1,23 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Is My Wallet Unique?</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;1,400&display=swap">
-<link rel="stylesheet" href="css/style.css?v=36">
-</head>
-<body>
-<article>
-  <header>
-    <h1>Is My Wallet Unique?</h1>
-    <p>A systematic overview of wallet fingerprints</p>
-  </header>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Is My Wallet Unique?</title>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;1,400&display=swap"
+    />
+    <link rel="stylesheet" href="css/style.css?v=36" />
+  </head>
+  <body>
+    <article>
+      <header>
+        <h1>Is My Wallet Unique?</h1>
+        <p>A systematic overview of wallet fingerprints</p>
+      </header>
 
-  <!-- Context and clustering prose is hidden for now.
+      <!-- Context and clustering prose is hidden for now.
   <section>
     <details>
     <summary class="kicker">// context</summary>
@@ -70,41 +73,45 @@
     </details>
   </section>
   -->
-</article>
+    </article>
 
-<section class="field">
-  <header>
-    <div class="mast">
-      <p id="window"></p>
-    </div>
-    <div class="tools">
-      <div class="modes">
-        <button type="button" id="mode-scale" class="on">True scale</button>
-        <button type="button" id="mode-side">Side by side</button>
-      </div>
-      <div class="modes pager" id="pager" hidden>
-        <button type="button" id="page-prev" aria-label="Previous page">‹</button>
-        <span id="page-num"></span>
-        <button type="button" id="page-next" aria-label="Next page">›</button>
-      </div>
-      <div class="scale-readout" id="scale-readout"></div>
-    </div>
-  </header>
-  <nav class="ladder" id="ladder" aria-label="Granularity"></nav>
-  <main>
-    <canvas id="field"></canvas>
-    <div id="tip" role="tooltip" hidden></div>
-  </main>
-  <aside>
-    <section id="readout">
-      <p class="kicker">Selection</p>
-      <h1 id="sel-title">All transactions</h1>
-      <p class="ratio" id="sel-ratio"></p>
-      <p class="share" id="sel-share"></p>
-      <p class="note" id="sel-note"></p>
-      <div class="mix" id="sel-mix"></div>
-    </section>
-    <!-- Labels are disabled for now to declutter the UI.
+    <section class="field">
+      <header>
+        <div class="mast">
+          <p id="window"></p>
+        </div>
+        <div class="tools">
+          <div class="modes">
+            <button type="button" id="mode-scale" class="on">True scale</button>
+            <button type="button" id="mode-side">Side by side</button>
+          </div>
+          <div class="modes pager" id="pager" hidden>
+            <button type="button" id="page-prev" aria-label="Previous page">
+              ‹
+            </button>
+            <span id="page-num"></span>
+            <button type="button" id="page-next" aria-label="Next page">
+              ›
+            </button>
+          </div>
+          <div class="scale-readout" id="scale-readout"></div>
+        </div>
+      </header>
+      <nav class="ladder" id="ladder" aria-label="Granularity"></nav>
+      <main>
+        <canvas id="field"></canvas>
+        <div id="tip" role="tooltip" hidden></div>
+      </main>
+      <aside>
+        <section id="readout">
+          <p class="kicker">Selection</p>
+          <h1 id="sel-title">All transactions</h1>
+          <p class="ratio" id="sel-ratio"></p>
+          <p class="share" id="sel-share"></p>
+          <p class="note" id="sel-note"></p>
+          <div class="mix" id="sel-mix"></div>
+        </section>
+        <!-- Labels are disabled for now to declutter the UI.
     <section>
       <p class="kicker">Labeled fingerprints</p>
       <form id="label-form">
@@ -114,28 +121,37 @@
       <ul id="labels"></ul>
     </section>
     -->
-    <section>
-      <p class="kicker">Filter <button type="button" id="reset">Reset</button></p>
-      <div class="join" id="join" role="group" aria-label="Combine filters">
-        <button type="button" id="join-and" class="on">And</button>
-        <button type="button" id="join-or">Or</button>
-      </div>
-      <div id="filters"></div>
+        <section>
+          <p class="kicker">
+            Filter <button type="button" id="reset">Reset</button>
+          </p>
+          <div class="join" id="join" role="group" aria-label="Combine filters">
+            <button type="button" id="join-and" class="on">And</button>
+            <button type="button" id="join-or">Or</button>
+          </div>
+          <div id="filters"></div>
+        </section>
+      </aside>
     </section>
-  </aside>
-</section>
 
-<footer>
-  <p>
-    © 2026
-    <a href="https://arminsabouri.com" target="_blank" rel="noopener">Armin Sabouri</a>
-    &amp; Isaac Kiniti ·
-    <a href="https://github.com/mit-dci/IsMyWalletUnique">source</a> ·
-    inspired by
-    <a href="https://amiunique.org/fingerprint" target="_blank" rel="noopener">amiunique.org</a>
-  </p>
-</footer>
-<script src="print.js?v=8"></script>
-<script src="app.js?v=28"></script>
-</body>
+    <footer>
+      <p>
+        © 2026
+        <a href="https://arminsabouri.com" target="_blank" rel="noopener"
+          >Armin Sabouri</a
+        >
+        &amp; Isaac Kiniti ·
+        <a href="https://github.com/mit-dci/IsMyWalletUnique">source</a> ·
+        inspired by
+        <a
+          href="https://amiunique.org/fingerprint"
+          target="_blank"
+          rel="noopener"
+          >amiunique.org</a
+        >
+      </p>
+    </footer>
+    <script src="print.js?v=8"></script>
+    <script src="app.js?v=28"></script>
+  </body>
 </html>

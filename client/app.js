@@ -12,8 +12,29 @@ const LADDER = [
   { title: "Fingerprint", key: "state" },
 ];
 
-const PALETTE = ["#e4dcc8", "#e07a5f", "#7dba9a", "#7aa2c4", "#d4c15a", "#c45d7a", "#9b84d6", "#e3a15a", "#8eb8b0", "#d48ab0", "#a3b86c", "#6f8f6a"];
-const LABEL_COLORS = ["#f2efe6", "#e07a5f", "#7dba9a", "#7aa2c4", "#d4c15a", "#c45d7a", "#9b84d6"];
+const PALETTE = [
+  "#e4dcc8",
+  "#e07a5f",
+  "#7dba9a",
+  "#7aa2c4",
+  "#d4c15a",
+  "#c45d7a",
+  "#9b84d6",
+  "#e3a15a",
+  "#8eb8b0",
+  "#d48ab0",
+  "#a3b86c",
+  "#6f8f6a",
+];
+const LABEL_COLORS = [
+  "#f2efe6",
+  "#e07a5f",
+  "#7dba9a",
+  "#7aa2c4",
+  "#d4c15a",
+  "#c45d7a",
+  "#9b84d6",
+];
 
 function clusterLabel(key, value, fps) {
   if (!key || value === "all" || value == null) return "All transactions";
@@ -24,9 +45,17 @@ const CELL = 3;
 const GAP = 1;
 const STRIDE = CELL + GAP;
 
-let payload, total, unit = "transactions", depth = 0, path = [], hover = null, join = "and";
+let payload,
+  total,
+  unit = "transactions",
+  depth = 0,
+  path = [],
+  hover = null,
+  join = "and";
 const filters = {};
-FACETS.forEach(([k]) => { filters[k] = new Set(); });
+FACETS.forEach(([k]) => {
+  filters[k] = new Set();
+});
 function loadLabels() {
   try {
     const parsed = JSON.parse(localStorage.getItem("fp-labels") || "[]");
@@ -77,9 +106,12 @@ function assignColors() {
       if (fp[key] == null || fp[key] === "") continue;
       counts.set(fp[key], (counts.get(fp[key]) || 0) + fp.n);
     }
-    [...counts.entries()].filter(([value]) => value != null && value !== "").sort((a, b) => b[1] - a[1]).forEach(([value], i) => {
-      colorOf[`${key}:${value}`] = colorForIndex(i);
-    });
+    [...counts.entries()]
+      .filter(([value]) => value != null && value !== "")
+      .sort((a, b) => b[1] - a[1])
+      .forEach(([value], i) => {
+        colorOf[`${key}:${value}`] = colorForIndex(i);
+      });
   }
   payload.fingerprints.forEach((fp, i) => {
     colorOf[`state:${fp.state}`] = colorForIndex(i);
@@ -106,7 +138,9 @@ function labelHits(fp, label) {
     if (vals.length) hits.push(vals.includes(fp[key]));
   }
   if (!hits.length) return false;
-  return (label.join || "and") === "or" ? hits.some(Boolean) : hits.every(Boolean);
+  return (label.join || "and") === "or"
+    ? hits.some(Boolean)
+    : hits.every(Boolean);
 }
 
 function labelOf(fp) {
@@ -125,7 +159,10 @@ function sizeCanvas() {
     sizedFor = key;
     const availW = Math.max(STRIDE, w - 56);
     const availH = Math.max(STRIDE, h - 64);
-    cellBudget = Math.max(1, Math.floor((availW / STRIDE) * (availH / STRIDE) * 0.9));
+    cellBudget = Math.max(
+      1,
+      Math.floor((availW / STRIDE) * (availH / STRIDE) * 0.9),
+    );
     baseUnit = Math.max(1, Math.round(total / cellBudget));
     homeS = 1;
   }
@@ -142,19 +179,29 @@ function layoutGroups() {
     buckets.get(value).push(fp);
   }
   const clump = spec.key || "version";
-  const seeds = [...buckets.entries()].map(([value, fps]) => {
-    const rank = new Map();
-    for (const fp of fps) rank.set(fp[clump], (rank.get(fp[clump]) || 0) + fp.n);
-    fps.sort((a, b) => (rank.get(b[clump]) - rank.get(a[clump])) || (b.n - a.n));
-    return {
-      value,
-      fps,
-      n: fps.reduce((s, r) => s + r.n, 0),
-      color: spec.key ? (colorOf[`${spec.key}:${value}`] || "#8e8a82") : "#e4dcc8",
-    };
-  }).sort((a, b) => b.n - a.n);
+  const seeds = [...buckets.entries()]
+    .map(([value, fps]) => {
+      const rank = new Map();
+      for (const fp of fps)
+        rank.set(fp[clump], (rank.get(fp[clump]) || 0) + fp.n);
+      fps.sort((a, b) => rank.get(b[clump]) - rank.get(a[clump]) || b.n - a.n);
+      return {
+        value,
+        fps,
+        n: fps.reduce((s, r) => s + r.n, 0),
+        color: spec.key
+          ? colorOf[`${spec.key}:${value}`] || "#8e8a82"
+          : "#e4dcc8",
+      };
+    })
+    .sort((a, b) => b.n - a.n);
 
-  const key = JSON.stringify([depth, path, join, FACETS.map(([k]) => [...filters[k]])]);
+  const key = JSON.stringify([
+    depth,
+    path,
+    join,
+    FACETS.map(([k]) => [...filters[k]]),
+  ]);
   if (key !== pageKey) {
     pageKey = key;
     page = 0;
@@ -165,7 +212,8 @@ function layoutGroups() {
     page = Math.min(page, pages.length - 1);
   }
   pageUnit = pages[page].u;
-  const rowLimit = mode === "side" ? Math.max(canvas.clientWidth * 3, 2400) : scaleRowLimit();
+  const rowLimit =
+    mode === "side" ? Math.max(canvas.clientWidth * 3, 2400) : scaleRowLimit();
   groups = place(pages[page].list, pageUnit, rowLimit);
   renderPager();
 }
@@ -176,14 +224,20 @@ function scaleRowLimit() {
 
 function fits(list, u, minScale) {
   const b = bounds(place(list, u, scaleRowLimit()));
-  return Math.min((canvas.clientWidth - 48) / b.w, (canvas.clientHeight - 48) / b.h) >= minScale;
+  return (
+    Math.min(
+      (canvas.clientWidth - 48) / b.w,
+      (canvas.clientHeight - 48) / b.h,
+    ) >= minScale
+  );
 }
 
 // Smallest unit at which the list fits the canvas unzoomed, or null if it never does.
 function unitToFit(list) {
   const most = list[0].n;
   if (!fits(list, most, 1)) return null;
-  let lo = Math.max(1, Math.round(list.reduce((s, g) => s + g.n, 0) / cellBudget)) - 1;
+  let lo =
+    Math.max(1, Math.round(list.reduce((s, g) => s + g.n, 0) / cellBudget)) - 1;
   let hi = most;
   while (hi - lo > 1) {
     const mid = Math.floor((lo + hi) / 2);
@@ -196,7 +250,8 @@ function unitToFit(list) {
 // Each page takes the most groups that fit the canvas at the page's own scale
 // while the smallest still gets MIN_CELLS boxes.
 function paginate(seeds) {
-  if (!seeds.length || fits(seeds, baseUnit, MIN_FIT)) return [{ list: seeds, u: baseUnit }];
+  if (!seeds.length || fits(seeds, baseUnit, MIN_FIT))
+    return [{ list: seeds, u: baseUnit }];
   const out = [];
   for (let s = 0; s < seeds.length;) {
     const ok = (c) => {
@@ -225,10 +280,12 @@ function paginate(seeds) {
 
 function renderPager() {
   document.getElementById("pager").hidden = pages.length < 2;
-  document.getElementById("page-num").textContent = `${page + 1} / ${pages.length}`;
+  document.getElementById("page-num").textContent =
+    `${page + 1} / ${pages.length}`;
   document.getElementById("page-prev").disabled = page === 0;
   document.getElementById("page-next").disabled = page === pages.length - 1;
-  document.getElementById("scale-readout").textContent = `1 box = ${pageUnit.toLocaleString()} ${unit}`;
+  document.getElementById("scale-readout").textContent =
+    `1 box = ${pageUnit.toLocaleString()} ${unit}`;
 }
 
 function place(seeds, u, rowLimit) {
@@ -265,7 +322,12 @@ function bounds(list) {
     maxY = Math.max(maxY, g.y + g.gh);
   }
   if (!list.length) return { minX: 0, minY: 0, w: 1, h: 1 };
-  return { minX, minY, w: Math.max(1, maxX - minX), h: Math.max(1, maxY - minY) };
+  return {
+    minX,
+    minY,
+    w: Math.max(1, maxX - minX),
+    h: Math.max(1, maxY - minY),
+  };
 }
 
 function frameOf(list, cap) {
@@ -275,7 +337,11 @@ function frameOf(list, cap) {
   const b = bounds(list);
   let s = Math.min((w - 48) / b.w, (h - 48) / b.h);
   if (cap) s = Math.min(s, homeS);
-  return { s, x: (w - b.w * s) / 2 - b.minX * s, y: (h - b.h * s) / 2 - b.minY * s };
+  return {
+    s,
+    x: (w - b.w * s) / 2 - b.minX * s,
+    y: (h - b.h * s) / 2 - b.minY * s,
+  };
 }
 
 function homeCamera() {
@@ -288,7 +354,9 @@ function aim(snap) {
   if (mode === "zoom") camTo = frameOf(groups, false);
   else if (mode === "side") camTo = frameOf(groups, true);
   else camTo = homeCamera();
-  document.getElementById("mode-scale").classList.toggle("on", mode === "scale");
+  document
+    .getElementById("mode-scale")
+    .classList.toggle("on", mode === "scale");
   document.getElementById("mode-side").classList.toggle("on", mode === "side");
   if (snap) {
     cam = { ...camTo };
@@ -304,9 +372,10 @@ function animate() {
     cam.y += (camTo.y - cam.y) * 0.045;
     cam.s += (camTo.s - cam.s) * 0.045;
     draw();
-    const done = Math.abs(cam.s - camTo.s) < 0.004
-      && Math.abs(cam.x - camTo.x) < 0.5
-      && Math.abs(cam.y - camTo.y) < 0.5;
+    const done =
+      Math.abs(cam.s - camTo.s) < 0.004 &&
+      Math.abs(cam.x - camTo.x) < 0.5 &&
+      Math.abs(cam.y - camTo.y) < 0.5;
     if (done) {
       cam = { ...camTo };
       draw();
@@ -336,7 +405,7 @@ function paintMark(x, y, span, accent) {
     }
     return;
   }
-  const gap = Math.min(1, span / splits * 0.2);
+  const gap = Math.min(1, (span / splits) * 0.2);
   const size = (span - gap * (splits - 1)) / splits;
   const step = size + gap;
   for (let iy = 0; iy < splits; iy += 1) {
@@ -374,10 +443,14 @@ function draw() {
       n: g.n,
       hot,
     });
-    if (g.x + g.gw < viewL || g.y + g.gh < viewT || g.x > viewR || g.y > viewB) continue;
+    if (g.x + g.gw < viewL || g.y + g.gh < viewT || g.x > viewR || g.y > viewB)
+      continue;
     let i = 0;
     g.fps.forEach((fp, fi) => {
-      let n = fi === g.fps.length - 1 ? g.cells - i : Math.round((fp.n / g.n) * g.cells);
+      let n =
+        fi === g.fps.length - 1
+          ? g.cells - i
+          : Math.round((fp.n / g.n) * g.cells);
       n = Math.max(0, Math.min(n, g.cells - i));
       const lab = labelOf(fp);
       const fill = g.color;
@@ -387,7 +460,12 @@ function draw() {
         const cx = g.x + (idx % g.cols) * STRIDE;
         const cy = g.y + Math.floor(idx / g.cols) * STRIDE;
         if (cx < viewL || cy < viewT || cx > viewR || cy > viewB) continue;
-        paintMark(cam.x + cx * cam.s, cam.y + cy * cam.s, span, lab ? lab.color : null);
+        paintMark(
+          cam.x + cx * cam.s,
+          cam.y + cy * cam.s,
+          span,
+          lab ? lab.color : null,
+        );
         if (lab) ctx.fillStyle = fill;
       }
       i += n;
@@ -395,7 +473,12 @@ function draw() {
     if (hot) {
       ctx.strokeStyle = "#e6e1d4";
       ctx.lineWidth = 1;
-      ctx.strokeRect(cam.x + (g.x - 1) * cam.s, cam.y + (g.y - 1) * cam.s, (g.gw + 2) * cam.s, (g.gh + 2) * cam.s);
+      ctx.strokeRect(
+        cam.x + (g.x - 1) * cam.s,
+        cam.y + (g.y - 1) * cam.s,
+        (g.gw + 2) * cam.s,
+        (g.gh + 2) * cam.s,
+      );
     }
   }
   ctx.font = '12px "IBM Plex Mono", ui-monospace, monospace';
@@ -403,7 +486,11 @@ function draw() {
   const placed = [];
   // Larger groups claim label space first; a label may overflow its group into free space.
   labels.sort((a, b) => b.hot - a.hot || b.n - a.n);
-  const free = (lab, tw) => !placed.some((p) => lab.x < p.r + 6 && lab.x + tw > p.l - 6 && Math.abs(lab.y - p.y) < 13);
+  const free = (lab, tw) =>
+    !placed.some(
+      (p) =>
+        lab.x < p.r + 6 && lab.x + tw > p.l - 6 && Math.abs(lab.y - p.y) < 13,
+    );
   for (const lab of labels) {
     if (lab.y < 2) continue;
     let text = lab.text;
@@ -469,7 +556,10 @@ function dive(group) {
   const b = bounds(canDescend ? groups : [group]);
   const s0 = Math.min(screen.w / b.w, screen.h / b.h);
   cam = { s: s0, x: screen.x - b.minX * s0, y: screen.y - b.minY * s0 };
-  camTo = frameOf(canDescend ? groups : groups.filter((g) => g.value === group.value), false);
+  camTo = frameOf(
+    canDescend ? groups : groups.filter((g) => g.value === group.value),
+    false,
+  );
   document.getElementById("mode-scale").classList.remove("on");
   document.getElementById("mode-side").classList.remove("on");
   renderReadout();
@@ -495,11 +585,13 @@ function mixRow(key, value, p, text) {
   bar.className = "mix-bar";
   const fill = document.createElement("i");
   fill.style.width = `${Math.max(1.5, Math.min(100, p * 100))}%`;
-  if (value != null && colorOf[`${key}:${value}`]) fill.style.background = colorOf[`${key}:${value}`];
+  if (value != null && colorOf[`${key}:${value}`])
+    fill.style.background = colorOf[`${key}:${value}`];
   bar.append(fill);
   const pct = document.createElement("span");
   pct.className = "pct";
-  pct.textContent = p >= 0.995 ? "100%" : `${(p * 100).toFixed(p < 0.1 ? 1 : 0)}%`;
+  pct.textContent =
+    p >= 0.995 ? "100%" : `${(p * 100).toFixed(p < 0.1 ? 1 : 0)}%`;
   row.append(name, bar, pct);
   return row;
 }
@@ -527,7 +619,9 @@ function renderMix(fps) {
     const h = document.createElement("h2");
     h.textContent = title;
     block.append(h);
-    ranked.slice(0, 4).forEach(([value, n]) => block.append(mixRow(key, value, n / totalN)));
+    ranked
+      .slice(0, 4)
+      .forEach(([value, n]) => block.append(mixRow(key, value, n / totalN)));
     const rest = ranked.slice(4).reduce((sum, [, n]) => sum + n, 0);
     if (rest) block.append(mixRow(key, null, rest / totalN, "rest"));
     blocks.push(block);
@@ -549,28 +643,44 @@ function renderMix(fps) {
 function renderReadout() {
   const chosen = [];
   for (const [key, set] of Object.entries(filters)) {
-    if (set.size) chosen.push([...set].map((v) => facetLabel(key, v)).join(" or "));
+    if (set.size)
+      chosen.push([...set].map((v) => facetLabel(key, v)).join(" or "));
   }
   const glue = join === "or" ? " or " : " · ";
   const matched = payload.fingerprints.filter(passes);
   const fallback = chosen.join(glue) || `All ${unit}`;
   const target = hover
-    ? { title: clusterLabel(LADDER[depth].key, hover.value, hover.fps), n: hover.n, fps: hover.fps }
+    ? {
+        title: clusterLabel(LADDER[depth].key, hover.value, hover.fps),
+        n: hover.n,
+        fps: hover.fps,
+      }
     : { title: fallback, n: viewN, fps: matched };
   const title = document.getElementById("sel-title");
   title.textContent = target.title || `All ${unit}`;
-  title.title = hover && LADDER[depth].key && LADDER[depth].key !== "state" ? tipFor(LADDER[depth].key, hover.value) : "";
+  title.title =
+    hover && LADDER[depth].key && LADDER[depth].key !== "state"
+      ? tipFor(LADDER[depth].key, hover.value)
+      : "";
   const { p, oneIn } = shareText(target.n);
-  document.getElementById("sel-ratio").textContent = target.n === total ? "" : typeof oneIn === "number" ? `1 out of ${oneIn.toLocaleString()}` : "—";
-  document.getElementById("sel-share").textContent = `${target.n.toLocaleString()} ${unit} · ${(p * 100).toFixed(2)}%`;
+  document.getElementById("sel-ratio").textContent =
+    target.n === total
+      ? ""
+      : typeof oneIn === "number"
+        ? `1 out of ${oneIn.toLocaleString()}`
+        : "—";
+  document.getElementById("sel-share").textContent =
+    `${target.n.toLocaleString()} ${unit} · ${(p * 100).toFixed(2)}%`;
   const note = document.getElementById("sel-note");
   const mix = document.getElementById("sel-mix");
   let noteText = "";
-  if (hover && hover.value === "other") noteText = tipFor(LADDER[depth].key, hover.value);
+  if (hover && hover.value === "other")
+    noteText = tipFor(LADDER[depth].key, hover.value);
   if (hover && hover.fps.length === 1 && LADDER[depth].key !== "state") {
     const words = fingerprintWords(hover.fps[0]).join(" · ");
     noteText = noteText ? `${noteText} ${words}` : words;
-  } else if (!hover && matched.length === 1) noteText = fingerprintWords(matched[0]).join(" · ");
+  } else if (!hover && matched.length === 1)
+    noteText = fingerprintWords(matched[0]).join(" · ");
   note.textContent = noteText;
   if (hover && hover.fps.length > 1) renderMix(hover.fps);
   else mix.replaceChildren();
@@ -611,7 +721,8 @@ function renderFilters() {
     const facet = document.createElement("div");
     const stepOn = LADDER[depth] && LADDER[depth].key === key;
     const picked = path.some((p) => p.key === key);
-    facet.className = stepOn || picked || filters[key].size ? "facet on" : "facet";
+    facet.className =
+      stepOn || picked || filters[key].size ? "facet on" : "facet";
     const h = document.createElement("h2");
     h.textContent = title;
     const opts = document.createElement("div");
@@ -619,19 +730,23 @@ function renderFilters() {
     const ranked = [...counts.entries()].sort((a, b) => b[1] - a[1]);
     const shown = ranked.slice(0, 8);
     for (const value of filters[key]) {
-      if (!shown.some(([v]) => v === value)) shown.push([value, counts.get(value) || 0]);
+      if (!shown.some(([v]) => v === value))
+        shown.push([value, counts.get(value) || 0]);
     }
     shown.forEach(([value, n]) => {
       const b = document.createElement("button");
       b.type = "button";
       b.textContent = facetLabel(key, value);
       b.className = filters[key].has(value) ? "on" : "";
-      b.title = `${tipFor(key, value)} · ${(100 * n / total).toFixed(1)}%`;
+      b.title = `${tipFor(key, value)} · ${((100 * n) / total).toFixed(1)}%`;
       b.onclick = () => {
         const step = path.find((p) => p.key === key);
         if (filters[key].has(value)) filters[key].delete(value);
         else filters[key].add(value);
-        if (step && !(filters[key].size === 1 && filters[key].has(step.value))) {
+        if (
+          step &&
+          !(filters[key].size === 1 && filters[key].has(step.value))
+        ) {
           path = path.filter((p) => p.key !== key);
         }
         layout();
@@ -663,7 +778,9 @@ function renderLabels() {
       path = path.filter((step) => filters[step.key]);
       for (const step of path) filters[step.key].add(step.value);
       join = label.join || "and";
-      document.getElementById("join-and").classList.toggle("on", join === "and");
+      document
+        .getElementById("join-and")
+        .classList.toggle("on", join === "and");
       document.getElementById("join-or").classList.toggle("on", join === "or");
       depth = path.reduce((deepest, step) => {
         const i = LADDER.findIndex((level) => level.key === step.key);
@@ -698,7 +815,9 @@ function placeTip(e) {
   const { p } = shareText(hover.n);
   tip.replaceChildren();
   // Facets every fingerprint in the group shares.
-  const shared = FACETS.filter(([key]) => hover.fps.every((fp) => fp[key] === hover.fps[0][key]));
+  const shared = FACETS.filter(([key]) =>
+    hover.fps.every((fp) => fp[key] === hover.fps[0][key]),
+  );
   if (shared.length) {
     const dl = document.createElement("dl");
     for (const [key, title] of shared) {
@@ -749,36 +868,42 @@ canvas.addEventListener("click", (e) => {
 let wheelDepth = 0;
 
 function wheelPixels(e) {
-  const scale = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? canvas.clientHeight : 1;
+  const scale =
+    e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? canvas.clientHeight : 1;
   return { x: e.deltaX * scale, y: e.deltaY * scale };
 }
 
-canvas.addEventListener("wheel", (e) => {
-  if (e.target !== canvas) return;
-  // Let the page scroll until the field section is snapped to the top.
-  if (Math.abs(canvas.closest(".field").getBoundingClientRect().top) > 1) return;
-  const { x, y } = wheelPixels(e);
-  if (e.ctrlKey) {
-    e.preventDefault();
-    wheelDepth += y;
-    if (Math.abs(wheelDepth) < 180) return;
-    const dir = wheelDepth > 0 ? 1 : -1;
+canvas.addEventListener(
+  "wheel",
+  (e) => {
+    if (e.target !== canvas) return;
+    // Let the page scroll until the field section is snapped to the top.
+    if (Math.abs(canvas.closest(".field").getBoundingClientRect().top) > 1)
+      return;
+    const { x, y } = wheelPixels(e);
+    if (e.ctrlKey) {
+      e.preventDefault();
+      wheelDepth += y;
+      if (Math.abs(wheelDepth) < 180) return;
+      const dir = wheelDepth > 0 ? 1 : -1;
+      wheelDepth = 0;
+      setDepth(depth + dir);
+      return;
+    }
     wheelDepth = 0;
-    setDepth(depth + dir);
-    return;
-  }
-  wheelDepth = 0;
-  e.preventDefault();
-  const rect = canvas.getBoundingClientRect();
-  cam.x -= x;
-  cam.y -= y;
-  camTo.x -= x;
-  camTo.y -= y;
-  hover = groupAt(e.clientX - rect.left, e.clientY - rect.top);
-  draw();
-  renderReadout();
-  placeTip(e);
-}, { passive: false });
+    e.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    cam.x -= x;
+    cam.y -= y;
+    camTo.x -= x;
+    camTo.y -= y;
+    hover = groupAt(e.clientX - rect.left, e.clientY - rect.top);
+    draw();
+    renderReadout();
+    placeTip(e);
+  },
+  { passive: false },
+);
 
 // Labels are disabled for now to declutter the UI.
 // document.getElementById("label-form").addEventListener("submit", (e) => {
@@ -817,22 +942,30 @@ document.getElementById("reset").onclick = () => {
 
 function writeUrl() {
   const q = new URLSearchParams();
-  for (const [key] of FACETS) filters[key].forEach((value) => q.append(key, value));
+  for (const [key] of FACETS)
+    filters[key].forEach((value) => q.append(key, value));
   if (join !== "and") q.set("join", join);
   if (LADDER[depth].key) q.set("depth", LADDER[depth].key);
   path.forEach((step) => q.append("path", step.key));
   const query = q.toString();
   const search = query && `?${query}`;
-  if (search !== location.search) history.replaceState(null, "", location.pathname + search + location.hash);
+  if (search !== location.search)
+    history.replaceState(null, "", location.pathname + search + location.hash);
 }
 
 function readUrl() {
   const q = new URLSearchParams(location.search);
-  const known = (key, value) => payload.fingerprints.some((fp) => fp[key] === value);
+  const known = (key, value) =>
+    payload.fingerprints.some((fp) => fp[key] === value);
   for (const [key] of FACETS) {
-    q.getAll(key).filter((value) => value && known(key, value)).forEach((value) => filters[key].add(value));
+    q.getAll(key)
+      .filter((value) => value && known(key, value))
+      .forEach((value) => filters[key].add(value));
   }
-  depth = Math.max(0, LADDER.findIndex((step) => step.key === q.get("depth")));
+  depth = Math.max(
+    0,
+    LADDER.findIndex((step) => step.key === q.get("depth")),
+  );
   const named = q.getAll("path");
   path = LADDER.slice(1, depth)
     .filter((step) => named.includes(step.key) && filters[step.key].size === 1)
@@ -863,14 +996,16 @@ new ResizeObserver(() => {
   if (key !== sizedFor && payload) layout();
 }).observe(canvas);
 
-fetch("fingerprints.json").then((r) => r.json()).then((data) => {
-  payload = data;
-  payload.fingerprints = collapsePrints(data.fingerprints);
-  total = data.total;
-  unit = data.unit || "transactions";
-  assignColors();
-  document.getElementById("window").textContent = windowLine(data);
-  renderFilters();
-  // renderLabels();
-  readUrl();
-});
+fetch("fingerprints.json")
+  .then((r) => r.json())
+  .then((data) => {
+    payload = data;
+    payload.fingerprints = collapsePrints(data.fingerprints);
+    total = data.total;
+    unit = data.unit || "transactions";
+    assignColors();
+    document.getElementById("window").textContent = windowLine(data);
+    renderFilters();
+    // renderLabels();
+    readUrl();
+  });

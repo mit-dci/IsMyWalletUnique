@@ -24,6 +24,8 @@
         treefmt-nix.lib.evalModule pkgs {
           projectRootFile = "flake.nix";
           programs.prettier.enable = true;
+          # Generated data, kept compact.
+          programs.prettier.excludes = [ "*.json" ];
         }
       );
     in
