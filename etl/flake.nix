@@ -2,9 +2,18 @@
   description = "Turn data-collection scans into the JSON-formatted export";
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+  inputs.treefmt-nix = {
+    url = "github:numtide/treefmt-nix";
+    inputs.nixpkgs.follows = "nixpkgs";
+  };
 
   outputs =
-    { self, nixpkgs, ... }:
+    {
+      self,
+      nixpkgs,
+      treefmt-nix,
+      ...
+    }:
     let
       systems = [
         "x86_64-linux"
@@ -13,6 +22,12 @@
         "aarch64-darwin"
       ];
       forAllSystems = f: nixpkgs.lib.genAttrs systems (system: f nixpkgs.legacyPackages.${system});
+      treefmtFor =
+        pkgs:
+        (treefmt-nix.lib.evalModule pkgs {
+          projectRootFile = "flake.nix";
+          programs.nixfmt.enable = true;
+        }).config.build;
     in
     {
       packages = forAllSystems (pkgs: {
@@ -39,6 +54,12 @@
 
       devShells = forAllSystems (pkgs: {
         default = pkgs.mkShell { packages = [ pkgs.duckdb ]; };
+      });
+
+      formatter = forAllSystems (pkgs: (treefmtFor pkgs).wrapper);
+
+      checks = forAllSystems (pkgs: {
+        formatting = (treefmtFor pkgs).check self;
       });
     };
 }
