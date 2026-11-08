@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  nix:
+    strategy:
+      fail-fast: false
+      matrix:
+        dir: [etl, data-collection]
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ matrix.dir }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: cachix/install-nix-action@v31
+      # An exact hit skips the build. Otherwise an older store still saves the fetches.
+      - uses: nix-community/cache-nix-action@v6
+        with:
+          primary-key: nix-${{ matrix.dir }}-${{ hashFiles(format('{0}/**', matrix.dir)) }}
+          restore-prefixes-first-match: nix-${{ matrix.dir }}-
+      # Includes the treefmt formatting check.
+      - run: nix flake check -L
+      # For data-collection this also runs cargo test, in the package's check phase.
+      - run: nix build -L
+
+  lint:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: data-collection
+    steps:
+      - uses: actions/checkout@v5
+      - uses: cachix/install-nix-action@v31
+      - uses: nix-community/cache-nix-action@v6
+        with:
+          primary-key: nix-lint-${{ hashFiles('data-collection/flake.*') }}
+          restore-prefixes-first-match: nix-lint-
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: data-collection
+      - run: nix develop -c cargo clippy --locked --all-targets -- -D warnings
