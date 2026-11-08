@@ -10,7 +10,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        dir: [etl, data-collection]
+        dir: [etl, data-collection, client]
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -26,7 +26,9 @@ jobs:
       # Includes the treefmt formatting check.
       - run: nix flake check -L
       # For data-collection this also runs cargo test, in the package's check phase.
-      - run: nix build -L
+      # client has no package, only the formatting check.
+      - if: matrix.dir != 'client'
+        run: nix build -L
 
   lint:
     runs-on: ubuntu-latest

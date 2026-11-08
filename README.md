@@ -4,4 +4,4 @@ A systematic overview of Bitcoin wallet fingerprints. This is a work in progress
 
 - `data-collection/` scans a Bitcoin Core node and writes per-transaction fingerprints to a DuckDB file.
 - `etl/` aggregates a scan into the `fingerprints.json` the website loads.
-- `docs/` is the static website.
+- `client/` is the static website.
