@@ -366,7 +366,7 @@ dependencies = [
 [[package]]
 name = "bitcoin-block-index"
 version = "0.1.0"
-source = "git+https://github.com/payjoin/tx-indexer?branch=master#b0ccf7a47e08a7fb9e04f6408364da9f8cd0c4ca"
+source = "git+https://github.com/fungi-protocol/tx-indexer?rev=8e2588e90be4cbe0bd99cf71f02ab2ba717d22b8#8e2588e90be4cbe0bd99cf71f02ab2ba717d22b8"
 dependencies = [
  "rusty-leveldb",
 ]
@@ -1851,7 +1851,7 @@ dependencies = [
 [[package]]
 name = "tx-indexer-fingerprints"
 version = "0.1.0"
-source = "git+https://github.com/payjoin/tx-indexer?branch=master#b0ccf7a47e08a7fb9e04f6408364da9f8cd0c4ca"
+source = "git+https://github.com/fungi-protocol/tx-indexer?rev=8e2588e90be4cbe0bd99cf71f02ab2ba717d22b8#8e2588e90be4cbe0bd99cf71f02ab2ba717d22b8"
 dependencies = [
  "bitcoin",
  "tx-indexer-primitives",
@@ -1860,7 +1860,7 @@ dependencies = [
 [[package]]
 name = "tx-indexer-primitives"
 version = "0.1.0"
-source = "git+https://github.com/payjoin/tx-indexer?branch=master#b0ccf7a47e08a7fb9e04f6408364da9f8cd0c4ca"
+source = "git+https://github.com/fungi-protocol/tx-indexer?rev=8e2588e90be4cbe0bd99cf71f02ab2ba717d22b8#8e2588e90be4cbe0bd99cf71f02ab2ba717d22b8"
 dependencies = [
  "bitcoin",
  "bitcoin-block-index",

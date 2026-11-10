@@ -12,6 +12,6 @@ rawtx-rs = { git = "https://github.com/0xB10C/rawtx-rs", branch = "master" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 serde_repr = "0.1.21"
-tx-indexer-fingerprints = { git = "https://github.com/fungi/tx-indexer", branch = "master" }
+tx-indexer-fingerprints = { git = "https://github.com/fungi-protocol/tx-indexer", rev = "8e2588e90be4cbe0bd99cf71f02ab2ba717d22b8" }
 duckdb = { version = "=1.10506.0", features = ["bundled", "appender-arrow"] }
 rayon = "1.12.0"
