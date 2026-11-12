@@ -13,6 +13,11 @@ async fn main() {
 }
 
 async fn fingerprints() -> impl axum::response::IntoResponse {
-    let bytes = tokio::fs::read("../client/fingerprints.json").await.unwrap();
-    ([(axum::http::header::CONTENT_TYPE, "application/json")], bytes)
+    let bytes = tokio::fs::read("../client/fingerprints.json")
+        .await
+        .unwrap();
+    (
+        [(axum::http::header::CONTENT_TYPE, "application/json")],
+        bytes,
+    )
 }
