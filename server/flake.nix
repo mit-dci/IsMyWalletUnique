@@ -28,6 +28,23 @@
           projectRootFile = "flake.nix";
           programs.nixfmt.enable = true;
           programs.rustfmt.enable = true;
+          settings.formatter.caddy = {
+            command = "${pkgs.bash}/bin/bash";
+            options = [
+              "-euc"
+              ''
+                for file in "$@"; do
+                  ${pkgs.lib.getExe pkgs.caddy} fmt --overwrite "$file"
+                done
+              ''
+              "--"
+            ];
+            includes = [
+              "Caddyfile"
+              "Caddyfile.*"
+              "*.Caddyfile"
+            ];
+          };
         }).config.build;
     in
     {

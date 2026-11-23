@@ -1,0 +1,19 @@
+{$DOMAIN} {
+	encode zstd gzip
+
+	reverse_proxy api:{$PORT} {
+		health_uri /health
+		health_interval 10s
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		-Server
+	}
+
+	log {
+		output stdout
+		format json
+	}
+}
