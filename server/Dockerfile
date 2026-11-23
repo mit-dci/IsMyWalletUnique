@@ -1,14 +1,5 @@
-FROM rust:1-slim-trixie AS build
-WORKDIR /app
-COPY . .
-RUN cargo build --release --locked
+FROM caddy:2.11.9-builder AS build
+RUN xcaddy build --with github.com/mholt/caddy-ratelimit@v0.1.1-0.20260612195517-5625512f24f6
 
-# Debian versions must match so the binary finds the same glibc.
-FROM gcr.io/distroless/cc-debian13
-ARG PORT=8080
-ENV PORT=${PORT}
-# Static busybox so the compose healthcheck can probe /health.
-COPY --from=busybox:1.36.1-musl /bin/busybox /busybox
-COPY --from=build /app/target/release/server /server
-EXPOSE ${PORT}
-CMD ["/server"]
+FROM caddy:2.11.9
+COPY --from=build /usr/bin/caddy /usr/bin/caddy

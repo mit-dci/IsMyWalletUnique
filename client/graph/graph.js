@@ -914,7 +914,7 @@ async function refreshMeta() {
       atHome = true;
     }
     if (next.complete) {
-      fetch("../fingerprints.json", { cache: "no-store" })
+      fetch(FINGERPRINTS_URL, { cache: "no-store" })
         .then((r) => r.json())
         .then((prints) => {
           total = prints.total;
@@ -1014,7 +1014,7 @@ window.addEventListener("keydown", (e) => {
 window.addEventListener("resize", resize);
 new ResizeObserver(resize).observe(canvas);
 
-fetch("../fingerprints.json", { cache: "no-store" })
+fetch(FINGERPRINTS_URL, { cache: "no-store" })
   .then((r) => r.json())
   .then((prints) => {
     total = prints.total;

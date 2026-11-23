@@ -1,15 +1,63 @@
-{$DOMAIN} {
-	encode zstd gzip
+{
+	order rate_limit before basic_auth
+}
 
-	reverse_proxy api:{$PORT} {
-		health_uri /health
-		health_interval 10s
-	}
+{$DOMAIN} {
+	root * /srv
 
 	header {
 		Strict-Transport-Security "max-age=31536000"
 		X-Content-Type-Options "nosniff"
+		Vary Origin
 		-Server
+	}
+
+	rate_limit {
+		zone per_ip {
+			match {
+				not path /health
+			}
+			key {client_ip}
+			events 60
+			window 1m
+		}
+	}
+
+	# Origin never carries a path, so this covers mit-dci.github.io/IsMyWalletUnique/.
+	# Browsers lowercase the host, so IsMyWalletUnique.com arrives as ismywalletunique.com.
+	@cors_allowed {
+		header Origin https://ismywalletunique.com
+		header Origin https://www.ismywalletunique.com
+		header Origin https://mit-dci.github.io
+		header Origin http://localhost:8080
+	}
+	@cors_blocked {
+		header Origin *
+		not {
+			header Origin https://ismywalletunique.com
+			header Origin https://www.ismywalletunique.com
+			header Origin https://mit-dci.github.io
+			header Origin http://localhost:8080
+		}
+	}
+	header @cors_allowed Access-Control-Allow-Origin {header.Origin}
+
+	handle /health {
+		respond "ok" 200
+	}
+
+	handle @cors_blocked {
+		respond 403
+	}
+
+	handle /fingerprints.json {
+		header Cache-Control "public, max-age=300"
+		encode zstd gzip
+		file_server
+	}
+
+	handle {
+		respond 404
 	}
 
 	log {

@@ -1,5 +1,5 @@
 {
-  description = "HTTP server for serving latest wallet fingerprint vectors";
+  description = "Caddy server for the latest wallet fingerprints.json";
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
   inputs.treefmt-nix = {
@@ -27,7 +27,6 @@
         (treefmt-nix.lib.evalModule pkgs {
           projectRootFile = "flake.nix";
           programs.nixfmt.enable = true;
-          programs.rustfmt.enable = true;
           settings.formatter.caddy = {
             command = "${pkgs.bash}/bin/bash";
             options = [
@@ -49,23 +48,17 @@
     in
     {
       packages = forAllSystems (pkgs: {
-        server = pkgs.rustPlatform.buildRustPackage {
-          pname = "server";
-          version = "0.1.0";
-          src = ./.;
-          cargoLock.lockFile = ./Cargo.lock;
-          meta.mainProgram = "server";
+        # Keep the plugin version in sync with the Dockerfile.
+        caddy = pkgs.caddy.withPlugins {
+          plugins = [ "github.com/mholt/caddy-ratelimit@v0.1.1-0.20260612195517-5625512f24f6" ];
+          hash = "sha256-lJOVCCLLVOnewSELRr6gzrRryFYeXbpCyOiGumSZ1dc=";
         };
-        default = self.packages.${pkgs.stdenv.hostPlatform.system}.server;
+        default = self.packages.${pkgs.stdenv.hostPlatform.system}.caddy;
       });
 
       devShells = forAllSystems (pkgs: {
         default = pkgs.mkShell {
-          inputsFrom = [ self.packages.${pkgs.stdenv.hostPlatform.system}.server ];
-          packages = [
-            pkgs.clippy
-            pkgs.rustfmt
-          ];
+          packages = [ self.packages.${pkgs.stdenv.hostPlatform.system}.caddy ];
         };
       });
 
@@ -73,6 +66,16 @@
 
       checks = forAllSystems (pkgs: {
         formatting = (treefmtFor pkgs).check self;
+        caddyfile =
+          pkgs.runCommand "caddyfile-validate"
+            {
+              nativeBuildInputs = [ self.packages.${pkgs.stdenv.hostPlatform.system}.caddy ];
+            }
+            ''
+              export HOME=$TMPDIR XDG_DATA_HOME=$TMPDIR XDG_CONFIG_HOME=$TMPDIR
+              DOMAIN=localhost caddy validate --adapter caddyfile --config ${./Caddyfile}
+              touch $out
+            '';
       });
     };
 }

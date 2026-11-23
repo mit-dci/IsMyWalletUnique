@@ -996,7 +996,7 @@ new ResizeObserver(() => {
   if (key !== sizedFor && payload) layout();
 }).observe(canvas);
 
-fetch("fingerprints.json")
+fetch(FINGERPRINTS_URL)
   .then((r) => r.json())
   .then((data) => {
     payload = data;

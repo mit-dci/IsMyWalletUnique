@@ -1,6 +1,6 @@
 services:
   caddy:
-    image: caddy:2
+    build: ./
     restart: unless-stopped
     ports:
       - "80:80"
@@ -8,30 +8,11 @@ services:
       - "443:443/udp"          # HTTP/3
     environment:
       - DOMAIN=${DOMAIN}
-      - PORT=${PORT}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./public:/srv:ro       # fingerprints.json, written by etl
       - caddy_data:/data       # ACME certificates
       - caddy_config:/config
-    depends_on:
-      api:
-        condition: service_healthy
-
-  api:
-    build:
-      context: ./
-      args:
-        PORT: ${PORT}
-    restart: unless-stopped
-    expose:
-      - "${PORT}"
-    environment:
-      - PORT=${PORT}
-    healthcheck:
-      test: ["CMD", "/busybox", "wget", "-qO-", "http://localhost:${PORT}/health"]
-      interval: 10s
-      timeout: 3s
-      retries: 5
 
 volumes:
   caddy_data:

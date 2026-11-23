@@ -23,7 +23,7 @@ jobs:
         with:
           primary-key: nix-${{ matrix.dir }}-${{ hashFiles(format('{0}/**', matrix.dir)) }}
           restore-prefixes-first-match: nix-${{ matrix.dir }}-
-      # Includes the treefmt formatting check.
+      # Includes the treefmt formatting check, and for server, caddy validate.
       - run: nix flake check -L
       # For the Rust crates this also runs cargo test, in the package's check phase.
       # client has no package, only the formatting check.
@@ -34,7 +34,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        dir: [data-collection, server]
+        dir: [data-collection]
     runs-on: ubuntu-latest
     defaults:
       run:

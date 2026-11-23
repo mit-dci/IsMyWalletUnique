@@ -1,6 +1,8 @@
 /* Facet values arrive as the collector's names (data-collection/features.md),
    with sets joined by "+". Display names are applied only when rendering. */
 
+const FINGERPRINTS_URL = "https://dolos.media.mit.edu/fingerprints.json";
+
 const FACETS = [
   ["version", "Version"],
   ["seq", "Sequence"],
