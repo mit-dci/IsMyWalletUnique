@@ -3,7 +3,7 @@
 }
 
 {$DOMAIN} {
-	root * /srv
+	root * {$ROOT:/srv}
 
 	header {
 		Strict-Transport-Security "max-age=31536000"
