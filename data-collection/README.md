@@ -9,8 +9,21 @@ cargo run --release -- start ~/.bitcoin scan.duckdb --chain mainnet --depth 1000
 
 # omit --depth to scan to genesis
 
+# or scan an explicit, inclusive height range
+cargo run --release -- start ~/.bitcoin scan.duckdb --chain mainnet --start-height 0 --end-height 49999
+
 # a run that died picks up after its last commit
 cargo run --release -- resume ~/.bitcoin scan.duckdb
+```
+
+`scan-chunks.sh` splits a range into one file per 50,000 blocks (by default), named
+`scan-<chain>-<start>-<end>.duckdb` with both heights inclusive, and appends the
+wall time of each run to `scan-timings.tsv` next to them. Rerun it with the same
+arguments after a failure to skip finished chunks and resume the interrupted one:
+
+```bash
+cargo build --release
+./scan-chunks.sh ~/.bitcoin data 0 199999
 ```
 
 `start` fixes the scan's chain and height range in the file and refuses a file

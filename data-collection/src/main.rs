@@ -90,8 +90,14 @@ struct StartArgs {
     node: NodeArgs,
     /// How many blocks to scan back from the tip (inclusive of tip).
     /// Omit to scan all the way to genesis.
-    #[arg(long)]
+    #[arg(long, conflicts_with_all = ["start_height", "end_height"])]
     depth: Option<u32>,
+    /// Lowest height to scan (inclusive). Defaults to genesis.
+    #[arg(long)]
+    start_height: Option<u32>,
+    /// Highest height to scan (inclusive). Defaults to the tip.
+    #[arg(long)]
+    end_height: Option<u32>,
     /// Network the data directory belongs to.
     #[arg(long, value_enum, default_value_t = CliChainType::Regtest)]
     chain: CliChainType,
@@ -139,6 +145,13 @@ fn run_start(args: StartArgs) -> Result<(), String> {
     if matches!(args.depth, Some(0)) {
         return Err("depth must be >= 1 (omit --depth to scan to genesis)".into());
     }
+    if let (Some(start), Some(end)) = (args.start_height, args.end_height)
+        && start > end
+    {
+        return Err(format!(
+            "--start-height {start} is above --end-height {end}"
+        ));
+    }
     // Checked before spending minutes importing blocks.
     if args.node.db.exists() {
         return Err(already_started(&args.node));
@@ -147,8 +160,17 @@ fn run_start(args: StartArgs) -> Result<(), String> {
     let context = create_context(args.chain.into())?;
     let chainman = load_chainman(&context, &args.node)?;
     let tip_height = tip_height(&chainman)?;
-    let start_height = match args.depth {
-        Some(depth) => {
+    let end_height = match args.end_height {
+        Some(end) if end as i64 > tip_height as i64 => {
+            return Err(format!(
+                "--end-height {end} is above the chain tip {tip_height}"
+            ));
+        }
+        Some(end) => end as i32,
+        None => tip_height,
+    };
+    let start_height = match (args.depth, args.start_height) {
+        (Some(depth), _) => {
             let chain_len = tip_height as i64 + 1;
             if depth as i64 > chain_len {
                 return Err(format!(
@@ -157,18 +179,24 @@ fn run_start(args: StartArgs) -> Result<(), String> {
             }
             tip_height - (depth as i32 - 1)
         }
-        None => 0,
+        (None, Some(start)) if start as i64 > end_height as i64 => {
+            return Err(format!(
+                "--start-height {start} is above the end height {end_height}"
+            ));
+        }
+        (None, Some(start)) => start as i32,
+        (None, None) => 0,
     };
 
     let range = ScanRange {
         chain: args.chain,
         start_height,
-        end_height: tip_height,
+        end_height,
     };
     let sink = DuckDbSink::create(&args.node.db, &range, &schema_ref().columns)?;
     walk(
         &chainman,
-        tip_height,
+        end_height,
         start_height,
         Box::new(sink),
         &args.node.db,
